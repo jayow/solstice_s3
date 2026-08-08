@@ -19,6 +19,11 @@ on:
     # does not duplicate.
     - cron: '5 0,12 * * *'
   workflow_dispatch:
+    inputs:
+      min_interval_hours:
+        description: 'Dedup window in hours (0 forces a capture regardless of the last one)'
+        required: false
+        default: '6'
 
 permissions:
   contents: write
@@ -37,7 +42,10 @@ jobs:
 
       - name: Fetch + append capture
         id: capture
-        run: python3 tools/capture_solstice_baseline.py data/solstice_totals.jsonl
+        # `inputs.*` is empty on a schedule trigger, so the fallback is the norm.
+        run: |
+          python3 tools/capture_solstice_baseline.py data/solstice_totals.jsonl \
+            --min-interval-hours "${{ inputs.min_interval_hours || '6' }}"
 
       - name: Commit + push
         if: steps.capture.outputs.appended == 'true'
