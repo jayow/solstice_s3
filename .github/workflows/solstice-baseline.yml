@@ -1,0 +1,70 @@
+name: Solstice baseline capture
+
+# Records every public Solstice number twice a day — flare total, user count,
+# SLX campaign parameters, USX/eUSX supply + peg, TVL, proof-of-reserve, the
+# quest catalog and partner APYs — so the inflation series never has a gap and
+# none of the history is lost (the endpoints expose current values only).
+#
+# This repo exists so the capture runs independently of the main dashboard
+# repo: no walkers, no RPC, no 41GB SQLite DB, no secrets. It appends one
+# ~2.4KB line to data/solstice_totals.jsonl and pushes. That is the whole job,
+# which is why it can be trusted to run unattended.
+
+on:
+  schedule:
+    # Twice daily. 00:05 UTC catches Solstice's 00:00 publish; 12:05 UTC is a
+    # free retry if that run failed, and adds intraday resolution for the
+    # continuously-moving numbers (peg, supply, TVL, APYs). The capture script
+    # dedups on a 6h window, so both land and a manual dispatch minutes later
+    # does not duplicate.
+    - cron: '5 0,12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solstice-baseline
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch + append capture
+        id: capture
+        run: python3 tools/capture_solstice_baseline.py data/solstice_totals.jsonl
+
+      - name: Commit + push
+        if: steps.capture.outputs.appended == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/solstice_totals.jsonl
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            MSG="baseline: ${{ steps.capture.outputs.date_utc }} = ${{ steps.capture.outputs.total_flares }} flares"
+            # Surface a catalog change in the subject line — a new S3 partner
+            # quest is the trigger to wire up a walker for it in the main repo.
+            if [ "${{ steps.capture.outputs.quests_changed }}" = "true" ]; then
+              MSG="$MSG [QUEST CATALOG CHANGED — now ${{ steps.capture.outputs.n_quests }}]"
+            fi
+            git commit -m "$MSG"
+            git push
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Solstice baseline capture" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- appended: \`${{ steps.capture.outputs.appended }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- date_utc: \`${{ steps.capture.outputs.date_utc }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- total_flares: \`${{ steps.capture.outputs.total_flares }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- quests: \`${{ steps.capture.outputs.n_quests }}\` (changed: \`${{ steps.capture.outputs.quests_changed }}\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- lines in log: \`$(wc -l < data/solstice_totals.jsonl)\`" >> $GITHUB_STEP_SUMMARY
