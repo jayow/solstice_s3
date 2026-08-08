@@ -1,0 +1,67 @@
+{
+  "generated_at_utc": "2026-08-08T16:57:35.662862+00:00",
+  "s2_start_ts": 1785542400,
+  "season": "S3",
+  "last_complete_midnight_ts": 1786147200,
+  "partners": [],
+  "partner_totals": {},
+  "days": [
+    {
+      "date": "2026-08-01",
+      "cumulative": 0.0,
+      "inflation": 0.0,
+      "by_partner": {}
+    },
+    {
+      "date": "2026-08-02",
+      "cumulative": 0.0,
+      "inflation": 0.0,
+      "by_partner": {}
+    },
+    {
+      "date": "2026-08-03",
+      "cumulative": 0.0,
+      "inflation": 0.0,
+      "by_partner": {}
+    },
+    {
+      "date": "2026-08-04",
+      "cumulative": 0.0,
+      "inflation": 0.0,
+      "by_partner": {}
+    },
+    {
+      "date": "2026-08-05",
+      "cumulative": 0.0,
+      "inflation": 0.0,
+      "by_partner": {}
+    },
+    {
+      "date": "2026-08-06",
+      "cumulative": 0.0,
+      "inflation": 0.0,
+      "by_partner": {}
+    },
+    {
+      "date": "2026-08-07",
+      "cumulative": 0.0,
+      "inflation": 0.0,
+      "by_partner": {}
+    }
+  ],
+  "solstice_series": [
+    {
+      "date": "2026-08-08",
+      "cumulative": 10347353898.0,
+      "inflation": 0
+    }
+  ],
+  "sources": {
+    "reconstructed_through_last_midnight": 0.0,
+    "wallet_quests_grand_total_now": 0,
+    "wallet_quests_grand_total_non_pda": 0,
+    "pda_excluded_count": 1944,
+    "pda_excluded_flares": 0,
+    "note": "Bars represent flares as of each day's 00:00 UTC. Today is in-progress and is omitted until tomorrow's 00:00 UTC. Protocol-PDA wallets are excluded to match Solstice's leaderboard."
+  }
+}
