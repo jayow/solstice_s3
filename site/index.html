@@ -782,15 +782,18 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
 // reads identically to their dashboard. Partner is the protocolCode
 // from the same API (note: 'whirlpool' → Orca, 'yield_vault' → eUSX HOLD).
 const QUEST_META = {
+  S3_HOLD_USX_DAILY: { mult: 10, label: 'Hold USX (daily — continues from S2)',  partner: 'Solstice' },
   S3_HOLD_USX_1MO:   { mult: 6,  label: 'Hold USX for 1 month',  partner: 'Solstice' },
   S3_HOLD_USX_3MO:   { mult: 15, label: 'Hold USX for 3 months', partner: 'Solstice' },
   S3_REFERRAL_BONUS: { mult: 0,  label: 'S3 Referral Bonus',     partner: 'Solstice' },
+  S3_HOLD_EUSX_DAILY:{ mult: 2,  label: 'Hold eUSX (daily — continues from S2)', partner: 'Yield Vault' },
   S3_HOLD_EUSX_1MO:  { mult: 4,  label: 'Hold eUSX for 1 month',  partner: 'Yield Vault' },
   S3_HOLD_EUSX_3MO:  { mult: 10, label: 'Hold eUSX for 3 months', partner: 'Yield Vault' },
   S3_HOLD_JR_STRCUSX_DAILY: { mult: 20, label: 'Hold JR-strcUSX (junior tranche)', partner: 'strcUSX' },
   S3_HOLD_SR_STRCUSX_DAILY: { mult: 15, label: 'Hold SR-strcUSX (senior tranche)', partner: 'strcUSX' },
 };
 const QUEST_EV_KEY = {
+  S3_HOLD_USX_DAILY:'S3_HOLD_USX', S3_HOLD_EUSX_DAILY:'S3_HOLD_EUSX',
   S3_HOLD_USX_1MO:'S3_HOLD_USX',  S3_HOLD_USX_3MO:'S3_HOLD_USX',
   S3_HOLD_EUSX_1MO:'S3_HOLD_EUSX', S3_HOLD_EUSX_3MO:'S3_HOLD_EUSX',
   S3_HOLD_JR_STRCUSX_DAILY:'S3_HOLD_JR_STRCUSX',
@@ -801,9 +804,11 @@ const POS_KEY = {};
 // shows the underlying balance — the 3MO tier shares the 1MO tier's balance,
 // so only the 1MO row (or the single DAILY row) surfaces it.
 const HOLD_QUEST_INFO = {
-  S3_HOLD_USX_1MO:  { ek:'S3_HOLD_USX',  unit:'USX',  peg:1.0,  primary:true },
+  S3_HOLD_USX_DAILY:  { ek:'S3_HOLD_USX',  unit:'USX',  peg:1.0,  primary:true },
+  S3_HOLD_USX_1MO:  { ek:'S3_HOLD_USX',  unit:'USX',  peg:1.0,  primary:false },
   S3_HOLD_USX_3MO:  { ek:'S3_HOLD_USX',  unit:'USX',  peg:1.0,  primary:false },
-  S3_HOLD_EUSX_1MO: { ek:'S3_HOLD_EUSX', unit:'eUSX', peg:null, primary:true },
+  S3_HOLD_EUSX_DAILY: { ek:'S3_HOLD_EUSX', unit:'eUSX', peg:null, primary:true },
+  S3_HOLD_EUSX_1MO: { ek:'S3_HOLD_EUSX', unit:'eUSX', peg:null, primary:false },
   S3_HOLD_EUSX_3MO: { ek:'S3_HOLD_EUSX', unit:'eUSX', peg:null, primary:false },
   S3_HOLD_JR_STRCUSX_DAILY: { ek:'S3_HOLD_JR_STRCUSX', unit:'JR-strcUSX', peg:1.0, primary:true },
   S3_HOLD_SR_STRCUSX_DAILY: { ek:'S3_HOLD_SR_STRCUSX', unit:'SR-strcUSX', peg:1.0, primary:true },
