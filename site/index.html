@@ -893,6 +893,15 @@ async function openDrawer(addr) {
   DRAWER_PAYLOAD = p;
   _updateDrawerHeadline(p);
   renderDrawerBody(p);
+  const ciNote = document.getElementById('dr-carryin-note');
+  if (ciNote) ciNote.remove();
+  if (p.tier_carry_in) {
+    const div = document.createElement('div');
+    div.id = 'dr-carryin-note';
+    div.style.cssText = 'background:rgba(124,92,255,.08); border:1px solid rgba(124,92,255,.35); color:var(--ink-200); padding:12px 16px; border-radius:10px; margin-bottom:24px; font-size:12.5px; line-height:1.5;';
+    div.innerHTML = '<strong>Carry-in balance.</strong> This wallet has held a qualifying balance since before Aug 1 with no S3 transaction. Under the S2-verified rule, the tier clock starts at the first in-season transaction — so nothing accrues until it moves. Whether Solstice credits carried balances is unconfirmed until the first payout wave (~Aug 31).';
+    document.getElementById('dr-total').after(div);
+  }
 }
 
 // (SLX projection calculator moved to /s2-calculator.html — see that page for logic.)
@@ -1366,7 +1375,7 @@ function renderStats() {
     <div class="stat" title="Every wallet participating in an S3 quest: earning now (strcUSX dailies) or in a qualifying hold with a tier payout pending. ${HIDE_PDAS ? 'Protocol PDAs hidden — toggle to include.' : 'All addresses incl. protocol PDAs.'}">
       <div class="label">Quest participants</div>
       <div class="v tabular">${all.length.toLocaleString()}</div>
-      <div class="sub">${all.filter(r => (r.total || 0) > 0).length.toLocaleString()} earning now · ${all.filter(r => (r.projected_total || 0) > 0).length.toLocaleString()} pending ${subSuffix}</div>
+      <div class="sub">${all.filter(r => (r.total || 0) > 0).length.toLocaleString()} earning · ${all.filter(r => (r.projected_total || 0) > 0).length.toLocaleString()} pending · ${all.filter(r => r.carry_in).length.toLocaleString()} carry-in ${subSuffix}</div>
     </div>
     <div class="stat" title="${headlineTip}">
       <div class="label">${headlineLabel}</div>
@@ -1388,7 +1397,7 @@ function renderStats() {
       if (!pend.length) return '';
       const sum = pend.reduce((a, r) => a + (r.projected_total || 0), 0);
       return `
-    <div class="stat" title="Wallets currently in a continuous ≥$100 hold — their 1MO/3MO tier payout is pending and lands at cycle completion (first wave ~Aug 31). Projections are estimates: the floor can drop, and a sub-$100 midnight resets the clock.">
+    <div class="stat" title="Wallets whose tier qualification clock is RUNNING (an in-season transaction started it). Carry-in wallets — holding since before Aug 1 with no S3 transaction — are counted separately and NOT projected: under the S2-verified rule their clock hasn't started. Projections are estimates: the floor can drop, and a sub-$100 midnight resets the clock.">
       <div class="label">Projected tier payouts</div>
       <div class="v tabular accent">~${fmt(sum)}</div>
       <div class="sub">across ${pend.length.toLocaleString()} wallets · first wave ~Aug 31</div>
@@ -1568,7 +1577,7 @@ function render() {
       <td class="left wallet">${short(r.wallet)} ${tags.join(' ')}</td>
       <td class="tabular">${r.twa_tvl_s1 != null ? fmtUsdShort(r.twa_tvl_s1) : '<span style="opacity:.35">—</span>'}</td>
       <td><span style="color: var(--accent-300); font-weight: 500;">${totalCell}</span></td>
-      <td>${(r.projected_total || 0) > 0 ? `<span style="color:var(--accent-2);" title="pending tier payout · ${r.tier_eta || ''}">~${fmt(r.projected_total)}</span>` : '<span style="opacity:.35">—</span>'}</td>
+      <td>${(r.projected_total || 0) > 0 ? `<span style="color:var(--accent-2);" title="pending tier payout · ${r.tier_eta || ''}">~${fmt(r.projected_total)}</span>` : (r.carry_in ? `<span style="opacity:.55;" title="Held ≥$100 since before Aug 1 with no S3 transaction. Under the S2-verified rule the tier clock starts at the first in-season transaction, so this wallet accrues nothing until it moves — whether Solstice credits carried balances is unconfirmed until the first payout wave (~Aug 31).">carry-in</span>` : '<span style="opacity:.35">—</span>')}</td>
       <td>${fmt(r.solstice)}</td>
       <td>${fmt(r.yield_vault)}</td>
       <td>${fmt(r.strcusx)}</td>
