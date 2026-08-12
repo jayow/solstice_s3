@@ -1363,10 +1363,10 @@ function renderStats() {
   const subSuffix = HIDE_PDAS ? '(excl. protocol PDAs)' : '(incl. protocol PDAs)';
 
   document.getElementById("stats").innerHTML = `
-    <div class="stat" title="Wallets earning S3 Flares on-chain. ${HIDE_PDAS ? 'Protocol PDAs hidden — toggle to include.' : 'All addresses incl. protocol PDAs.'}">
-      <div class="label">Earners</div>
-      <div class="v tabular">${all.filter(r => (r.total || 0) > 0).length.toLocaleString()}</div>
-      <div class="sub">earning now · ${subSuffix}</div>
+    <div class="stat" title="Every wallet participating in an S3 quest: earning now (strcUSX dailies) or in a qualifying hold with a tier payout pending. ${HIDE_PDAS ? 'Protocol PDAs hidden — toggle to include.' : 'All addresses incl. protocol PDAs.'}">
+      <div class="label">Quest participants</div>
+      <div class="v tabular">${all.length.toLocaleString()}</div>
+      <div class="sub">${all.filter(r => (r.total || 0) > 0).length.toLocaleString()} earning now · ${all.filter(r => (r.projected_total || 0) > 0).length.toLocaleString()} pending ${subSuffix}</div>
     </div>
     <div class="stat" title="${headlineTip}">
       <div class="label">${headlineLabel}</div>
@@ -1376,19 +1376,24 @@ function renderStats() {
     <div class="stat" title="Earners that registered for the Season 1 airdrop.">
       <div class="label">S1 retained</div>
       <div class="v tabular">${s1.toLocaleString()}</div>
-      <div class="sub">${all.length ? (s1/all.length*100).toFixed(1) : '0'}% of earners</div>
+      <div class="sub">${all.length ? (s1/all.length*100).toFixed(1) : '0'}% of participants</div>
     </div>
     <div class="stat" title="Earners that didn't register for S1 but are accruing S3 flares.">
       <div class="label">New in S3</div>
       <div class="v tabular">${newS2.toLocaleString()}</div>
-      <div class="sub">${all.length ? (newS2/all.length*100).toFixed(1) : '0'}% of earners</div>
+      <div class="sub">${all.length ? (newS2/all.length*100).toFixed(1) : '0'}% of participants</div>
     </div>
-    ${(RAW.totals && RAW.totals.on_track) ? `
-    <div class="stat" title="Wallets currently in a continuous ≥$100 hold — their 1MO/3MO tier payout is pending and lands at cycle completion (first wave ~Aug 31). Projected total if every hold continues: ~${fmt(RAW.totals.projected_sum || 0)} flares.">
-      <div class="label">Tier payouts pending</div>
-      <div class="v tabular">${RAW.totals.on_track.toLocaleString()}</div>
-      <div class="sub">first wave ~Aug 31</div>
-    </div>` : ''}
+    ${(() => {
+      const pend = all.filter(r => (r.projected_total || 0) > 0);
+      if (!pend.length) return '';
+      const sum = pend.reduce((a, r) => a + (r.projected_total || 0), 0);
+      return `
+    <div class="stat" title="Wallets currently in a continuous ≥$100 hold — their 1MO/3MO tier payout is pending and lands at cycle completion (first wave ~Aug 31). Projections are estimates: the floor can drop, and a sub-$100 midnight resets the clock.">
+      <div class="label">Projected tier payouts</div>
+      <div class="v tabular accent">~${fmt(sum)}</div>
+      <div class="sub">across ${pend.length.toLocaleString()} wallets · first wave ~Aug 31</div>
+    </div>`;
+    })()}
   `;
   renderPartnerStats();
 }
