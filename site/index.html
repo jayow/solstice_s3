@@ -367,6 +367,7 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
             <th data-key="wallet" class="left">Wallet</th>
             <th data-key="twa_tvl_s1" title="Season 1 Time-Weighted Average TVL (USD). Frozen historical metric. '—' means we haven't indexed this wallet's tx history yet.">TWA TVL (S1)</th>
             <th data-key="total" class="desc" id="th-total">Total</th>
+            <th data-key="projected_total" title="Projected pay-at-completion tier payout if the wallet keeps its ≥$100 hold — lands ~Aug 31 (1MO) / ~Oct 30 (3MO). Estimate: the floor can still drop, and a dip below $100 resets the clock.">Pending</th>
             <th data-key="solstice">Hold USX</th>
             <th data-key="yield_vault">Hold eUSX</th>
             <th data-key="strcusx">strcUSX</th>
@@ -961,7 +962,7 @@ function renderQuestTable(p) {
       flares, daily,
       raw: _rawHoldingFor(p, quest),
       usd: _dollarFor(p, quest),
-      active: flares > 0 || daily > 0,
+      active: flares > 0 || daily > 0 || !!((p.pending_by_quest || {})[quest]),
     });
     groups[partner].tvl += tvlMap[quest] || 0;
     groups[partner].flares += flares;
@@ -987,7 +988,9 @@ function renderQuestTable(p) {
       const cls = r.active ? '' : 'inactive';
       const mult = (r.mult || 0) + '×';
       const dailyCell = r.daily > 0 ? fmtFlaresDec(r.daily) : '—';
-      const totalCell = r.flares > 0 ? fmtFlaresDec(r.flares) : '—';
+      const pend = (p.pending_by_quest || {})[r.quest];
+      const totalCell = r.flares > 0 ? fmtFlaresDec(r.flares)
+        : (pend ? `<span style="color:var(--accent-2);" title="Projected payout if the hold continues — ${pend.days_left}d to completion (day ${pend.run_days} of the cycle)">~${fmtFlaresDec(pend.projected)} <span style="opacity:.6;">· ${pend.eta}</span></span>` : '—');
       const rawCell = (r.raw && r.raw.amount > 0) ? fmtAmt(r.raw.amount, r.raw.unit) : '—';
       const usdCell = (r.usd != null && r.usd > 0) ? fmtUsd(r.usd) : '—';
       return `<tr class="${cls}">
@@ -1362,8 +1365,8 @@ function renderStats() {
   document.getElementById("stats").innerHTML = `
     <div class="stat" title="Wallets earning S3 Flares on-chain. ${HIDE_PDAS ? 'Protocol PDAs hidden — toggle to include.' : 'All addresses incl. protocol PDAs.'}">
       <div class="label">Earners</div>
-      <div class="v tabular">${all.length.toLocaleString()}</div>
-      <div class="sub">${subSuffix}</div>
+      <div class="v tabular">${all.filter(r => (r.total || 0) > 0).length.toLocaleString()}</div>
+      <div class="sub">earning now · ${subSuffix}</div>
     </div>
     <div class="stat" title="${headlineTip}">
       <div class="label">${headlineLabel}</div>
@@ -1380,6 +1383,12 @@ function renderStats() {
       <div class="v tabular">${newS2.toLocaleString()}</div>
       <div class="sub">${all.length ? (newS2/all.length*100).toFixed(1) : '0'}% of earners</div>
     </div>
+    ${(RAW.totals && RAW.totals.on_track) ? `
+    <div class="stat" title="Wallets currently in a continuous ≥$100 hold — their 1MO/3MO tier payout is pending and lands at cycle completion (first wave ~Aug 31). Projected total if every hold continues: ~${fmt(RAW.totals.projected_sum || 0)} flares.">
+      <div class="label">Tier payouts pending</div>
+      <div class="v tabular">${RAW.totals.on_track.toLocaleString()}</div>
+      <div class="sub">first wave ~Aug 31</div>
+    </div>` : ''}
   `;
   renderPartnerStats();
 }
@@ -1522,7 +1531,9 @@ function applyFilters() {
   rs.sort((a, b) => {
     if (sortKey === "wallet") return dir * a.wallet.localeCompare(b.wallet);
     if (sortKey === "rank") return dir * ((a[rankField] || 0) - (b[rankField] || 0));
-    return dir * ((a[effectiveSortKey] || 0) - (b[effectiveSortKey] || 0));
+    const d = dir * ((a[effectiveSortKey] || 0) - (b[effectiveSortKey] || 0));
+    if (d !== 0 || effectiveSortKey !== 'total') return d;
+    return dir * ((a.projected_total || 0) - (b.projected_total || 0));
   });
   filtered = rs;
   page = 0;
@@ -1552,6 +1563,7 @@ function render() {
       <td class="left wallet">${short(r.wallet)} ${tags.join(' ')}</td>
       <td class="tabular">${r.twa_tvl_s1 != null ? fmtUsdShort(r.twa_tvl_s1) : '<span style="opacity:.35">—</span>'}</td>
       <td><span style="color: var(--accent-300); font-weight: 500;">${totalCell}</span></td>
+      <td>${(r.projected_total || 0) > 0 ? `<span style="color:var(--accent-2);" title="pending tier payout · ${r.tier_eta || ''}">~${fmt(r.projected_total)}</span>` : '<span style="opacity:.35">—</span>'}</td>
       <td>${fmt(r.solstice)}</td>
       <td>${fmt(r.yield_vault)}</td>
       <td>${fmt(r.strcusx)}</td>
