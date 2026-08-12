@@ -1,0 +1,1594 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solstice S3 Flares · Hanyon Analytics</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<style>
+:root {
+  /* Legacy ink/accent scale retained for tooltip + chart back-compat */
+  --ink-50: rgb(232, 232, 237);
+  --ink-100: rgb(232, 232, 237);
+  --ink-200: rgb(201, 201, 208);
+  --ink-300: rgb(155, 155, 163);
+  --ink-400: rgb(122, 122, 131);
+  --ink-500: rgb(84, 84, 92);
+  --ink-700: rgb(40, 40, 46);
+  --ink-900: rgb(17, 17, 20);
+  --ink-950: rgb(10, 10, 12);
+  --accent-200: rgb(253, 230, 138);
+  --accent-300: rgb(252, 211, 77);
+  --accent-400: rgb(251, 191, 36);
+  --accent-500: rgb(245, 158, 11);
+
+  /* Calculator design tokens — adopted for the wallet drawer redesign (Pass 1). */
+  --bg: #0a0a0b;
+  --bg-elev: #131316;
+  --hairline: rgba(255,255,255,.08);
+  --hairline-strong: rgba(255,255,255,.12);
+  --text: #f5f5f7;
+  --text-2: #a1a1a6;
+  --text-3: #6e6e73;
+  --accent: #fcd34d;
+  --accent-2: #fbbf24;
+  --accent-warm: #eb6237;
+  --up: #30d158;
+  --down: #ff453a;
+  --pill-up-bg: rgba(48,209,88,.15);
+  --pill-down-bg: rgba(255,69,58,.15);
+  --ease: cubic-bezier(.4,0,.2,1);
+  --dur: .18s;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--ink-950); color: var(--ink-100);
+             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+             font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.tabular { font-variant-numeric: tabular-nums; }
+.display { font-family: "Inter", ui-sans-serif, system-ui; font-weight: 600; letter-spacing: -0.02em; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-400); }
+
+main { max-width: 1200px; margin: 0 auto; padding: 64px 24px; }
+
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+.brand { display: flex; align-items: center; gap: 16px; color: var(--ink-300); }
+.brand a { color: inherit; text-decoration: none; transition: color .15s; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.brand a:hover { color: var(--ink-50); }
+.brand .sep { color: var(--ink-500); }
+.right-links { display: flex; align-items: center; gap: 16px; font-size: 11px; }
+.right-links a { color: var(--ink-500); text-decoration: none; text-transform: uppercase; letter-spacing: 0.14em; transition: color .15s; }
+.right-links a.featured { color: var(--accent-300); }
+.right-links a:hover { color: var(--ink-200); }
+.right-links a.featured:hover { color: var(--accent-200); }
+.right-links .sep { color: var(--ink-500); }
+
+/* Stats + donut: side-by-side on desktop, stacked on mobile.
+   Stats are bare text (no card enclosure) so they sit lightly next to the donut. */
+.stats-row { display: grid; grid-template-columns: 1fr; gap: 24px;
+             margin-bottom: 48px; align-items: center; }
+@media (min-width: 980px) { .stats-row { grid-template-columns: 1fr 340px; } }
+
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 40px;
+         margin-bottom: 0; }
+.stat { padding: 0; background: transparent; }
+.stat .v { font-size: 26px; margin-top: 6px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat .v.accent { color: var(--accent-300); }
+.stat .sub { font-size: 11px; color: var(--ink-500); font-variant-numeric: tabular-nums; margin-top: 4px; }
+
+/* Custom tooltip — appears instantly on hover, follows cursor */
+#hover-tooltip {
+  position: fixed; pointer-events: none; z-index: 9999;
+  background: rgba(15, 17, 22, 0.96); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--ink-100);
+  font-variant-numeric: tabular-nums; white-space: pre-line;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  opacity: 0; transition: opacity .08s;
+}
+#hover-tooltip.visible { opacity: 1; }
+.has-hover-tip { cursor: default; }
+
+section { margin-bottom: 56px; }
+section h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 16px; }
+.section-sub { font-size: 11px; color: var(--ink-500); font-variant-numeric: tabular-nums; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+
+.surface { background: rgba(255,255,255,.015); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; overflow: hidden; }
+.surface > * + * { border-top: 1px solid rgba(255,255,255,.06); }
+
+.controls { display: flex; gap: 8px; padding: 14px 20px; align-items: center; flex-wrap: wrap; }
+.controls input, .controls select, .controls button {
+  background: rgba(255,255,255,.03); color: var(--ink-100); border: 1px solid rgba(255,255,255,.08);
+  padding: 8px 12px; border-radius: 8px; font: inherit; font-size: 12px;
+}
+.controls input { width: 360px; }
+.controls input:focus, .controls select:focus { outline: 1px solid var(--accent-400); border-color: var(--accent-400); }
+.controls button { cursor: pointer; transition: background .15s, border-color .15s; }
+.controls button:hover { background: rgba(255,255,255,.05); }
+.controls .btn-active { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.30); color: var(--accent-200); }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: right; padding: 10px 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { font-weight: 500; color: var(--ink-400); cursor: pointer; user-select: none; text-transform: uppercase; font-size: 10px; letter-spacing: 0.14em; }
+th.asc::after  { content: ' ▲'; color: var(--accent-300); }
+th.desc::after { content: ' ▼'; color: var(--accent-300); }
+td.left, th.left { text-align: left; }
+tbody tr { border-top: 1px solid rgba(255,255,255,.04); transition: background .1s; }
+tbody tr:hover { background: rgba(255,255,255,.015); }
+
+.wallet { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 13px; }
+.wallet a { color: var(--ink-200); text-decoration: none; transition: color .1s; }
+.wallet a:hover { color: var(--accent-300); }
+.tag { display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 9.5px;
+       text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid; margin-left: 6px;
+       font-variant-numeric: tabular-nums; vertical-align: 1px; }
+.tag.s1 { color: var(--accent-300); border-color: rgba(245, 158, 11, 0.25); }
+.tag.new { color: var(--ink-400); border-color: rgba(255,255,255,0.10); }
+.tag.cohort { color: var(--ink-200); border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.02); }
+.tag.pda { color: #fda4af; border-color: rgba(253, 164, 175, 0.3); background: rgba(253, 164, 175, 0.06); cursor: help; }
+
+.zero { color: var(--ink-500); }
+
+.pagination { display: flex; gap: 8px; align-items: center; padding: 14px 20px; justify-content: space-between;
+              border-top: 1px solid rgba(255,255,255,.06); font-size: 11px; color: var(--ink-400); }
+.pagination button { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+                     color: var(--ink-200); padding: 6px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
+.pagination button:disabled { opacity: .35; cursor: default; }
+
+footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top: 40px; }
+
+@media (max-width: 720px) {
+  .controls input { width: 100%; }
+  th, td { padding: 8px 10px; }
+}
+
+/* ─── Mobile (phone-only, ≤767px) ───────────────────────────────────────────
+   Separate visual layer: stats stack, table becomes card list, drawer is
+   bottom-anchored. Desktop layout above untouched. */
+@media (max-width: 767px) {
+  body { font-size: 13px; }
+  main { padding: 0 16px; }
+
+  /* Header: stack brand + links vertically, tighter spacing */
+  header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 0; }
+  .brand { font-size: 11px; line-height: 1.4; }
+  .brand img { height: 26px !important; }
+  .right-links { font-size: 10px; gap: 10px; flex-wrap: wrap; }
+
+  /* Stats: single column stack, smaller numbers */
+  .stats-row { gap: 16px; margin-bottom: 28px; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+  .stat .v { font-size: 19px; }
+  .stat .sub { font-size: 10px; }
+
+  /* Donut chart: shrink to fit (keep visible since it's the visual headline) */
+  #partner-stats svg { max-width: 220px; height: auto; }
+
+  /* Section headings */
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 15px; }
+
+  /* Chart: keep 240px height (JS hardcodes that for bar scale + y-axis label
+     positions). Tightening only the padding-left so the y-axis labels nestle
+     against the chart edge, not eating 54px of horizontal space. */
+  #chart { padding-left: 36px !important; }
+  #chart-y-axis > div { padding-left: 0 !important; }
+  #chart-y-axis span { font-size: 9px !important; }
+  #chart-x-axis { font-size: 9px; padding-left: 36px !important; }
+  /* Partner legend below chart: tighter on mobile */
+  #chart-partner-legend { padding-left: 36px !important; gap: 8px !important; font-size: 9.5px !important; }
+  /* Hide per-bar value labels on mobile — y-axis grid + tap tooltips
+     carry the same info without the visual noise. */
+  #chart > div > div:first-child { display: none !important; }
+  /* Chart surface card: tighter padding so bars get more horizontal room */
+  #chart-section .surface { padding: 14px !important; }
+
+  /* Controls: stack vertically, full-width tap targets */
+  .controls { padding: 12px 14px; gap: 8px; flex-direction: column; align-items: stretch; }
+  .controls > * { width: 100%; }
+  .controls > span[style*="flex:1"] { display: none; }
+  .controls input, .controls select, .controls button { padding: 11px 14px; font-size: 13px; }
+  .controls > div, .controls #prev-top, .controls #next-top {
+    /* Group the prev/next buttons side-by-side at the bottom */
+  }
+
+  /* Table → information-dense flex-wrap card list. Visual order:
+       Row 1:  rank · wallet+tags · TOTAL
+       Row 2:  partner-flare chips (non-zero only, wrap as needed)
+       Row 3:  small S1 TWA footnote (only when value present)
+     Implemented via flexbox with `flex-basis: 100%` line-breakers so each
+     "row" is forced onto its own visual line. Avoids the grid-cell-overlap
+     bug from the prior layout. */
+  thead { display: none; }
+  table { border-collapse: separate; }
+  tbody { display: block; width: 100%; }
+  tbody tr {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    gap: 6px 8px;
+    padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.06);
+  }
+  tbody tr:hover { background: transparent; }
+  tbody tr:active { background: rgba(255,255,255,.03); }
+  tbody td { padding: 0; white-space: normal; }
+
+  /* Row 1: rank | wallet (grows) | total */
+  tbody td:nth-child(1) { /* rank */
+    order: 1; flex: 0 0 auto;
+    font-size: 11px; color: var(--ink-500); min-width: 18px;
+  }
+  tbody td:nth-child(2) { /* wallet + tags */
+    order: 2; flex: 1 1 auto;
+    font-size: 13px; text-align: left;
+  }
+  tbody td:nth-child(4) { /* total flares (or TVL) — pushed to right edge */
+    order: 3; flex: 0 0 auto;
+    font-size: 14px; font-weight: 600; color: var(--accent-300);
+    text-align: right;
+  }
+  tbody td:nth-child(4)::before {
+    content: 'TOTAL '; color: var(--ink-500); font-size: 9.5px;
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: normal;
+    margin-right: 4px; vertical-align: 1px;
+  }
+
+  /* Force row break before partner chips */
+  tbody td:nth-child(5) { margin-left: 0; }
+  tbody tr::after {
+    content: ''; flex-basis: 100%; order: 4; height: 0;
+  }
+
+  /* Rows 2+: metric chips. Each chip sizes to its content and wraps naturally.
+     No strict 25%/50% slots — short values ("EXP 6.10B") take less room and
+     more chips fit per row; long values ("TWA TVL $3.63K") take what they
+     need without truncation. */
+  tbody td:nth-child(3),                          /* TWA TVL (S1) */
+  tbody td:nth-child(n+5):nth-child(-n+11) {      /* USX..Loop partner cells */
+    order: 5; flex: 0 0 auto;                     /* size to content, no grow */
+    box-sizing: border-box;
+    font-size: 10.5px; color: var(--ink-200);
+    padding: 4px 8px; border-radius: 5px;
+    background: rgba(255,255,255,.025);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;                          /* keep chip on one line */
+    line-height: 1.4;
+  }
+  /* Hide zero-value partner cells. TWA "—" stays as a chip so every card
+     shows S1 status at a glance. */
+  tbody td:nth-child(n+5):nth-child(-n+11):has(span.zero) { display: none; }
+  tbody td:nth-child(n+5):nth-child(-n+11):empty { display: none; }
+  /* Tiny labels inside each chip */
+  tbody td:nth-child(3)::before  { content: 'TWA TVL '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tbody td:nth-child(5)::before  { content: 'USX '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tbody td:nth-child(6)::before  { content: 'eUSX '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tbody td:nth-child(7)::before  { content: 'EXP '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tbody td:nth-child(8)::before  { content: 'KAM '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tbody td:nth-child(9)::before  { content: 'ORCA '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tbody td:nth-child(10)::before { content: 'RAY '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tbody td:nth-child(11)::before { content: 'LOOP '; color: var(--ink-500); font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* Pagination: bigger tap targets */
+  .pagination { padding: 14px 16px; font-size: 11px; }
+  .pagination button { padding: 10px 16px; font-size: 12px; }
+
+  /* Drawer: tighter padding, mobile-optimized */
+  #drawer > div { padding: 16px 14px !important; max-width: none !important; }
+  #drawer .label { font-size: 10px !important; }
+  #dr-addr { font-size: 11px !important; word-break: break-all; }
+  /* Drawer header row: stack wallet info above action buttons on mobile */
+  #drawer > div > div[style*="justify-content:space-between"],
+  #drawer > div > div[style*="space-between"] {
+    flex-direction: column !important; gap: 14px;
+  }
+  #drawer > div > div[style*="space-between"] > div:last-child {
+    flex-wrap: wrap; width: 100%;
+  }
+
+  /* Footer */
+  footer { font-size: 10px; padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <div class="brand">
+      <a href="https://solstice.finance" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center;">
+        <img src="logos/solstice-text.svg" alt="Solstice" style="height: 33px; display:block; filter: invert(1);" />
+      </a>
+      <span class="sep">·</span>
+      <span class="display" style="font-size: 12px; color: var(--ink-400);">
+        Unofficial S3 Flares by
+        <a href="https://hanyon.app" target="_blank" rel="noopener noreferrer" style="color: var(--ink-200); text-decoration: underline dotted; text-underline-offset: 3px;">Hanyon Analytics</a>
+      </span>
+    </div>
+    <div class="right-links">
+      <a href="https://s2.solstice.hanyon.app/" target="_blank" rel="noopener noreferrer">Season 2 ↗</a>
+      <span class="sep">·</span>
+      <a href="https://airdrop.solstice.hanyon.app/" target="_blank" rel="noopener noreferrer">Season 1 ↗</a>
+      <span class="sep">·</span>
+      <a href="https://app.solstice.finance/?ref=z763qy4JcE" class="featured" target="_blank" rel="noopener noreferrer">Join Solstice ↗</a>
+    </div>
+  </header>
+
+  <div class="stats-row">
+    <section class="stats" id="stats"></section>
+    <section id="partner-stats" style="margin: 0;"></section>
+  </div>
+  <div id="hover-tooltip"></div>
+
+  <section id="chart-section" style="margin-bottom:40px;">
+    <div class="section-head">
+      <h2 class="display">Flares by quest family</h2>
+      <span class="section-sub">
+        <select id="chart-mode" onchange="onChartModeChange(this.value)" style="background:transparent; border:1px solid rgba(255,255,255,.1); color:var(--ink-300); padding:4px 24px 4px 10px; border-radius:6px; cursor:pointer; font-size:11px; appearance:none; -webkit-appearance:none; background-image: linear-gradient(45deg, transparent 50%, var(--ink-400) 50%), linear-gradient(135deg, var(--ink-400) 50%, transparent 50%); background-position: calc(100% - 12px) 50%, calc(100% - 7px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;">
+          <option value="solstice">Solstice (official)</option>
+          <option value="cumulative">Cumulative</option>
+          <option value="inflation">Daily emission</option>
+        </select>
+      </span>
+    </div>
+    <div class="surface" style="padding:24px;">
+      <div id="chart-wrap" style="position:relative;">
+        <div id="chart-y-axis" style="position:absolute; left:0; right:0; top:0; height:240px; pointer-events:none;"></div>
+        <div id="chart" style="position:relative; display:flex; align-items:flex-end; gap:4px; height:240px; padding-left:54px;"></div>
+      </div>
+      <div id="chart-x-axis" style="display:flex; gap:4px; margin-top:8px; font-size:10px; color:var(--ink-500); font-variant-numeric:tabular-nums; padding-left:54px;"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2 class="display">Season 3 Flares</h2>
+      <span class="section-sub">1MO / 3MO tiers pay at completion — first 1MO payouts ~Aug 31, 3MO ~Oct 30. strcUSX dailies accrue now.</span>
+    </div>
+    <div class="surface">
+      <div class="controls">
+        <input id="search" placeholder="Search wallet (pubkey or prefix)…" autocomplete="off"/>
+        <select id="protocol-filter">
+          <option value="">Any protocol</option>
+          <option value="solstice">Has Hold USX</option>
+          <option value="yield_vault">Has Hold eUSX</option>
+          <option value="strcusx">Has strcUSX</option>
+        </select>
+        <button id="toggle-pdas" onclick="togglePDAs()" title="Show or hide protocol-internal PDA addresses (vault contracts, strategy aggregators, etc.). Totals and ranks update accordingly.">Hide PDAs</button>
+        <button id="toggle-view" onclick="toggleView()" title="Switch the headline stat, table column, and per-wallet drawer between cumulative S2 Flares and current-snapshot TVL (USD).">Show TVL</button>
+        <button id="toggle-tvl-filter" onclick="toggleTvlFilter()" title="Hide wallets whose current TVL is less than their S1 TWA TVL — catches wallets that farmed in S1 and have since exited.">Hide TVL &lt; TWA</button>
+        <span style="flex:1;"></span>
+        <button id="prev-top" title="Previous page">‹ Prev</button>
+        <button id="next-top" title="Next page">Next ›</button>
+      </div>
+      <table id="t">
+        <thead>
+          <tr>
+            <th data-key="rank" class="left">#</th>
+            <th data-key="wallet" class="left">Wallet</th>
+            <th data-key="twa_tvl_s1" title="Season 1 Time-Weighted Average TVL (USD). Frozen historical metric. '—' means we haven't indexed this wallet's tx history yet.">TWA TVL (S1)</th>
+            <th data-key="total" class="desc" id="th-total">Total</th>
+            <th data-key="solstice">Hold USX</th>
+            <th data-key="yield_vault">Hold eUSX</th>
+            <th data-key="strcusx">strcUSX</th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+      <div class="pagination">
+        <span id="pageinfo"></span>
+        <span style="display:flex; gap:8px;">
+          <button id="prev">‹ Prev</button>
+          <button id="next">Next ›</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Estimated S3 Flares per wallet · TWAB-based per-protocol calculations · Updated <span id="footer-time"></span>
+  </footer>
+</main>
+
+<!-- Wallet detail (full screen overlay) -->
+<div id="drawer" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:51; overflow-y:auto;">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px;">
+    <button onclick="closeDrawer()" class="dr-btn-ghost" style="margin-bottom:24px; display:inline-flex; align-items:center; gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:28px;">
+      <div class="dr-addr-chip">
+        <a id="dr-addr" href="#" target="_blank" rel="noopener" title="Open on Jupiter Portfolio"></a>
+        <button id="dr-copy" type="button" onclick="copyDrawerAddr(this)" title="Copy address" aria-label="Copy wallet address">
+          <svg id="dr-copy-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+      <div style="display:flex; gap:8px;">
+      </div>
+    </div>
+    <div id="dr-total" style="margin-bottom:8px;"></div>
+    <div id="dr-pda-warning" style="display:none; background: rgba(252,211,77,.08); border:1px solid rgba(252,211,77,.36); color:var(--accent-2); padding:14px 18px; border-radius:10px; margin-bottom:28px; font-size:13px; line-height:1.55;">
+      <strong style="color:var(--accent);">Protocol-internal PDA.</strong> This address is not a user wallet — it's a program-derived account (e.g. a strategy contract, kVault aggregator, or vault PDA) that holds positions on behalf of many underlying depositors. The flares shown here should pass through to the real users who deposited, but redistribution is not yet implemented.
+    </div>
+    <div id="dr-content"></div>
+  </div>
+</div>
+
+<style>
+  /* Ghost button styling for drawer chrome (Pass 1 redesign).
+     Matches calculator's .btn-ghost — used for Back, sort, SLX Calculator. */
+  .dr-btn-ghost {
+    appearance: none; background: transparent;
+    border: 1px solid var(--hairline-strong); color: var(--text-2);
+    padding: 8px 14px; border-radius: 8px;
+    font: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: background var(--dur) var(--ease),
+                color var(--dur) var(--ease),
+                border-color var(--dur) var(--ease);
+  }
+  .dr-btn-ghost:hover { background: rgba(255,255,255,.04); color: var(--text);
+                        border-color: rgba(255,255,255,.20); }
+
+  /* Wallet address chip: monospace pill that anchors the drawer head.
+     Hover surfaces an accent border, click-to-copy lives inside the chip. */
+  .dr-addr-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 10px 8px 10px 14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    transition: border-color var(--dur) var(--ease),
+                background var(--dur) var(--ease);
+    max-width: 100%;
+  }
+  .dr-addr-chip:hover { border-color: rgba(255,255,255,.18); }
+  .dr-addr-chip #dr-addr {
+    /* Inherit the body's sans-serif so the address reads in the same voice
+       as the quest table ("Farm Variable USX Yield…"). Tabular numerics keep
+       the digits in this base58 string column-aligned without monospace. */
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px; font-weight: 500; letter-spacing: -0.005em;
+    color: var(--text); text-decoration: none; word-break: break-all;
+    line-height: 1.3;
+  }
+  .dr-addr-chip #dr-addr:hover { color: var(--accent); }
+  .dr-addr-chip #dr-copy {
+    appearance: none; background: transparent; border: 0;
+    color: var(--text-3); cursor: pointer;
+    padding: 6px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background var(--dur) var(--ease),
+                color var(--dur) var(--ease);
+  }
+  .dr-addr-chip #dr-copy:hover { background: rgba(255,255,255,.06); color: var(--text); }
+  .dr-addr-chip #dr-copy.copied { color: var(--accent); }
+</style>
+
+<style>
+  tr.row-click { cursor: pointer; }
+  tr.row-click:hover { background: rgba(255,255,255,.025); }
+  tr.row-click:hover .wallet { color: var(--accent-200); }
+
+  /* ── Wallet drawer — Pass 1 redesign (calculator design language) ─── */
+
+  /* Stats readout strip — 4-col grid matching calc's assumptions__readout */
+  .dr-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+              padding: 18px 0 28px; margin-bottom: 28px;
+              border-bottom: 1px solid var(--hairline); }
+  .dr-stat { display: flex; flex-direction: column; gap: 6px; }
+  .dr-stat__label { font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase;
+                    color: var(--text-3); font-weight: 600; }
+  .dr-stat__value { font-size: 17px; font-weight: 600; color: var(--text);
+                    font-variant-numeric: tabular-nums; }
+  .dr-stat__value.accent { color: var(--accent); }
+  @media (max-width: 720px) {
+    .dr-stats { grid-template-columns: repeat(2, 1fr); gap: 14px 12px; }
+  }
+
+  /* Legacy box (kept for fallback, but redesigned to use new tokens) */
+  .qsum-box { background: var(--bg-elev); border:1px solid var(--hairline); border-radius:10px; padding:18px 22px; margin-bottom:32px; }
+  .qsum-head { font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:.16em; margin-bottom:14px; font-weight:600; }
+  .qsum { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; font-size:13px; border-top:1px solid var(--hairline); }
+  .qsum:first-of-type { border-top:0; }
+  .qsum-v { color:var(--accent); font-variant-numeric:tabular-nums; font-weight:600; font-size:14px; }
+
+  /* Per-partner quest sections (matches Solstice dashboard arrangement).
+     Each partner gets a header (name + Current TVL + Total Flares) followed
+     by its own sub-table. Solstice itself is rendered headerless to mirror
+     Solstice's own UI — its HOLD + Referral quests sit at the top directly. */
+  .qparts { display: flex; flex-direction: column; gap: 28px; }
+  .qpart { display: flex; flex-direction: column; gap: 12px; }
+  .qpart-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+    padding: 4px 4px 0; flex-wrap: wrap;
+  }
+  .qpart-name {
+    font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.01em;
+  }
+  .qpart-stats {
+    display: flex; align-items: flex-end; gap: 24px;
+    font-variant-numeric: tabular-nums;
+  }
+  .qpart-stat { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .qpart-stat__lbl {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600;
+  }
+  .qpart-stat__val { font-size: 16px; font-weight: 600; color: var(--text); }
+  @media (max-width: 720px) {
+    .qpart-name { font-size: 18px; }
+    .qpart-stats { gap: 16px; }
+    .qpart-stat__val { font-size: 14px; }
+  }
+
+  /* Unified quest table — single row per quest, partner-grouped */
+  .quest-table-wrap { background: var(--bg-elev); border:1px solid var(--hairline); border-radius:10px; overflow-x: auto; }
+  .quest-table { width:100%; border-collapse:collapse; font-variant-numeric: tabular-nums; min-width: 760px; }
+  .quest-table thead th {
+    position: sticky; top: 0; z-index: 1;
+    background: var(--bg-elev);
+    font-size: 11px; color: var(--text-3); font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--hairline);
+    text-align: right; white-space: nowrap;
+  }
+  .quest-table thead th.left { text-align: left; }
+  .quest-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 14px; color: var(--text);
+    text-align: right; white-space: nowrap;
+  }
+  .quest-table tbody td.left { text-align: left; }
+  .quest-table tbody tr.inactive td { color: var(--text-3); }
+  .quest-table .cell-quest   { font-size: 14px; font-weight: 500; color: var(--text); }
+  .quest-table .cell-mult    { font-size: 14px; font-weight: 500; color: var(--text-2); }
+  .quest-table .cell-num     { font-size: 14px; font-weight: 600; color: var(--text); }
+  .quest-table tbody tr.inactive .cell-quest,
+  .quest-table tbody tr.inactive .cell-mult,
+  .quest-table tbody tr.inactive .cell-num { color: var(--text-3); font-weight: 500; }
+
+  .evt-section-head { font-size:11px; color:var(--text-3); text-transform:uppercase;
+                      letter-spacing:.16em; margin:0 0 14px; font-weight:600; }
+
+  /* Partner section wrapper */
+  .proto-block { margin: 28px 0 0; padding: 24px 0 8px; border-top: 1px solid var(--hairline); }
+  .proto-block:first-of-type { margin-top: 0; border-top: 0; padding-top: 0; }
+  .proto-block .pos-card + .pos-card { margin-top: 10px; }
+
+  /* Position card — flat --bg-elev surface, 10px radius, 1px hairline */
+  .pos-card { background: var(--bg-elev); border: 1px solid var(--hairline);
+              border-radius: 10px; padding: 18px 22px; margin-bottom: 14px;
+              transition: border-color var(--dur) var(--ease); }
+  .pos-card:hover { border-color: var(--hairline-strong); }
+  .pos-head { display:flex; justify-content:space-between; align-items:baseline; gap:16px; }
+  .pos-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .pos-name .market-chip { display:inline-block; padding:2px 8px; background:rgba(252,211,77,.10);
+                           color: var(--accent-2); border:1px solid rgba(252,211,77,.36);
+                           border-radius:7px; font-size:10px; font-weight:600;
+                           letter-spacing:.06em; margin-right:8px; vertical-align:middle;
+                           text-transform: uppercase; }
+  .pos-flares { font-size: 17px; color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .pos-flares .unit { font-size: 10px; color: var(--text-3); margin-left: 6px; font-weight: 400;
+                      text-transform: uppercase; letter-spacing: 0.08em; }
+  .pos-meta { font-size:12px; color: var(--text-3); margin-top:8px;
+              display:flex; gap:14px; flex-wrap:wrap; align-items: center; }
+  .pos-meta strong { color: var(--text-2); font-weight: 500; }
+  .pos-meta .badge-earning { color: var(--up); font-weight:600; }
+  .pos-meta .badge-dim { color: var(--text-3); }
+  /* Status pill (earning / not earning) — calc's --up/--down recipe */
+  .pos-meta .pill-status { font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+                            text-transform: uppercase; padding: 2px 8px; border-radius: 999px;
+                            background: rgba(255,255,255,.05); color: var(--text-3); }
+  .pos-meta .pill-status.earning { background: var(--pill-up-bg); color: var(--up); }
+
+  /* Trade history (inside position card) */
+  .trades { margin-top: 16px; border-top: 1px solid var(--hairline); padding-top: 12px; }
+  .trades-empty { font-size: 12px; color: var(--text-3); padding: 6px 0; }
+  .trade { display: grid; grid-template-columns: auto auto 1fr auto; gap: 14px;
+           padding: 6px 0; font-size: 13px; font-variant-numeric: tabular-nums;
+           align-items: baseline; }
+  .trade-ts { color: var(--text-3); font-size: 12px; font-family: ui-monospace,monospace; }
+  /* BUY/SELL etc. as a pill — calc's .up/.down recipe */
+  .trade-side { font-weight: 600; font-size: 10px; letter-spacing: 0.08em;
+                padding: 2px 8px; border-radius: 999px;
+                background: rgba(255,255,255,.05); color: var(--text-3); }
+  .trade-side.buy { background: var(--pill-up-bg); color: var(--up); }
+  .trade-side.sell { background: var(--pill-down-bg); color: var(--down); }
+  .trade-amt { color: var(--text); }
+  .trade-bal { color: var(--text-3); }
+
+  /* Protocol section header */
+  .proto-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 14px; }
+  .proto-name { font-size: 11px; font-weight: 600; color: var(--text-2);
+                text-transform: uppercase; letter-spacing: 0.16em;
+                display:inline-flex; align-items:center; gap:10px; }
+  .proto-dot { display: none; }   /* drop green-dot (covered by status pill on cards now) */
+  .proto-status { font-size:10px; font-weight:600; letter-spacing:.08em; padding:2px 8px;
+                  border-radius:999px; text-transform:uppercase; }
+  .proto-status.earning { background: var(--pill-up-bg); color: var(--up); }
+  .proto-status.dim { background: rgba(255,255,255,.04); color: var(--text-3); }
+  .proto-flares { font-size: 17px; color: var(--accent); font-variant-numeric: tabular-nums;
+                  font-weight: 600; letter-spacing: 0; }
+  .pos-sub { font-size:11px; color:var(--text-3); text-transform:uppercase;
+             letter-spacing:.14em; margin-bottom:10px; font-weight:600; }
+  /* Meta lines inside a position card — convert dashed-top to clean hairline */
+  .pos-meta-line { display:flex; justify-content:space-between; align-items:baseline;
+                   padding: 10px 0; font-size: 13px; color: var(--text-2);
+                   border-top: 1px solid var(--hairline); }
+  .pos-meta-line:first-of-type { border-top:0; padding-top: 4px; }
+  .pos-meta-v { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* ── Unified protocol block (Pass 2) ───────────────────────────────────
+     One layout for every partner: section header + 4-stat readout + flat
+     list of expandable position rows. */
+  .proto-section { margin: 28px 0 0; padding: 28px 0 8px; border-top: 1px solid var(--hairline); }
+  .proto-section:first-of-type { margin-top: 0; border-top: 0; padding-top: 0; }
+  .proto-section__head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 16px; gap: 16px;
+  }
+  .proto-section__name {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .proto-section__dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--up); box-shadow: 0 0 6px rgba(48,209,88,.5);
+    flex: 0 0 6px;
+  }
+  .proto-section__dot.dim { background: var(--text-3); box-shadow: none; opacity: .5; }
+  .proto-section__flares {
+    font-size: 20px; font-weight: 600; color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .proto-section__flares .unit {
+    font-size: 10px; color: var(--text-3); margin-left: 8px; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  /* 4-stat readout — exact replica of calc's .assumptions__readout */
+  .proto-readout {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    padding: 14px 18px; margin-bottom: 18px;
+    background: var(--bg-elev); border: 1px solid var(--hairline);
+    border-radius: 10px;
+  }
+  .proto-stat { display: flex; flex-direction: column; gap: 4px; }
+  .proto-stat__label {
+    font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--text-3); font-weight: 600;
+  }
+  .proto-stat__value {
+    font-size: 16px; font-weight: 600; color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 720px) {
+    .proto-readout { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  }
+
+  /* Position row — flat, always-visible. No dropdown. (Pass 3 redesign) */
+  .pos-row {
+    border-bottom: 1px solid var(--hairline);
+    padding: 20px 4px;
+    transition: background var(--dur) var(--ease);
+  }
+  .pos-row:first-of-type { border-top: 1px solid var(--hairline); }
+  .pos-row:hover { background: rgba(255,255,255,.015); }
+  /* Primary line: label/chip/pubkey on left, big tabular value on right */
+  .pos-row__primary {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline; gap: 16px;
+  }
+  .pos-row__label {
+    display: inline-flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    color: var(--text); font-weight: 600; font-size: 15px;
+    line-height: 1.3; min-width: 0;
+  }
+  .pos-row__label .pubkey {
+    color: var(--text-3); font-size: 11px; font-family: ui-monospace, monospace;
+    text-decoration: none; font-weight: 400;
+  }
+  .pos-row__label .pubkey:hover { color: var(--text-2); text-decoration: underline dotted; }
+  .pos-row__chip {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    background: rgba(252,211,77,.10); color: var(--accent-2);
+    border: 1px solid rgba(252,211,77,.36);
+    vertical-align: 2px;
+  }
+  .pos-row__chip.neutral {
+    background: rgba(255,255,255,.04); color: var(--text-2);
+    border-color: var(--hairline);
+  }
+  /* The headline number on the right — bigger, accent-tinted */
+  .pos-row__value {
+    color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600;
+    font-size: 18px; line-height: 1.2; letter-spacing: -0.01em;
+    text-align: right; white-space: nowrap;
+  }
+  .pos-row__value .unit {
+    color: var(--text-3); font-weight: 500; margin-left: 5px; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  /* Meta grid below primary line — always visible, no toggle */
+  .pos-row__meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px 24px; margin-top: 12px;
+  }
+  .pos-row__meta-item {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px; font-size: 12px;
+    padding: 6px 0; min-width: 0;
+  }
+  .pos-row__meta-label {
+    color: var(--text-3); letter-spacing: 0.04em;
+    text-transform: uppercase; font-size: 10px; font-weight: 600;
+    white-space: nowrap;
+  }
+  .pos-row__meta-value {
+    color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600;
+    font-size: 13px; text-align: right; white-space: nowrap;
+  }
+  .pos-row__info { color: var(--text-3); font-size: 11px; cursor: help; }
+  /* Trades inside a position — rendered inline below meta */
+  .pos-row__trades {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--hairline);
+  }
+  /* When a section has zero positions, show an empty-state message instead of nothing */
+  .proto-empty {
+    padding: 18px 4px; font-size: 13px; color: var(--text-3);
+    text-align: center; font-style: italic;
+  }
+
+  /* Per-protocol tx list (compact) */
+  .tx-list { padding:8px 0 0; }
+  .tx-row { display:grid; grid-template-columns:130px 1fr; gap:14px; padding:6px 0; font-size:12px; line-height:1.4; }
+  .tx-ts { color:var(--ink-500); font-family:ui-monospace,monospace; }
+  .tx-action { color:var(--ink-100); }
+  .tx-sub { color:var(--ink-400); }
+
+  /* Activity row (legacy / fallback) */
+  .evt { display:grid; grid-template-columns:54px 1fr auto; gap:14px; padding:12px 0; border-top:1px solid rgba(255,255,255,.04); align-items:flex-start; }
+  .evt:first-of-type { border-top:0; }
+  .evt-cat { font-size:10px; font-weight:600; letter-spacing:.08em; padding:3px 6px; background:rgba(255,255,255,.04); border-radius:4px; text-align:center; }
+  .evt-body { font-size:13px; color:var(--ink-100); line-height:1.5; }
+  .evt-body .amt { font-variant-numeric:tabular-nums; font-weight:600; }
+  .evt-sub { font-size:11px; color:var(--ink-400); margin-top:3px; }
+  .evt-quest { display:inline-block; margin-left:8px; padding:1px 6px; border:1px solid rgba(255,255,255,.08); border-radius:4px; font-size:10px; color:var(--ink-300); }
+  .evt-ts { font-size:11px; color:var(--ink-500); white-space:nowrap; padding-top:2px; font-family:ui-monospace,monospace; }
+  .quest-card { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
+  .quest-card.zero { opacity: .35; }
+  .quest-card .qh { display:flex; justify-content:space-between; align-items:baseline; }
+  .quest-card .qname { font-size: 12px; color: var(--ink-200); font-weight: 500; }
+  .quest-card .qflares { font-size: 14px; font-variant-numeric: tabular-nums; color: var(--accent-300); }
+  .quest-card.zero .qflares { color: var(--ink-500); }
+  .quest-card .qsrc { font-size: 10px; color: var(--ink-500); margin-top:4px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .ev { font-size: 11px; color: var(--ink-300); margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,.06); font-variant-numeric: tabular-nums; }
+  .ev table { width:100%; font-size: 11px; }
+  .ev th, .ev td { padding: 4px 8px; text-align: right; }
+  .ev th { color: var(--ink-500); font-weight: 500; }
+  .ev th.left, .ev td.left { text-align: left; }
+  .ev .mono { font-family: ui-monospace, monospace; }
+</style>
+
+<script>
+// Labels match Solstice's app/flares-quests API verbatim so the table
+// reads identically to their dashboard. Partner is the protocolCode
+// from the same API (note: 'whirlpool' → Orca, 'yield_vault' → eUSX HOLD).
+const QUEST_META = {
+  S3_HOLD_USX_1MO:   { mult: 6,  label: 'Hold USX for 1 month',  partner: 'Solstice' },
+  S3_HOLD_USX_3MO:   { mult: 15, label: 'Hold USX for 3 months', partner: 'Solstice' },
+  S3_REFERRAL_BONUS: { mult: 0,  label: 'S3 Referral Bonus',     partner: 'Solstice' },
+  S3_HOLD_EUSX_1MO:  { mult: 4,  label: 'Hold eUSX for 1 month',  partner: 'Yield Vault' },
+  S3_HOLD_EUSX_3MO:  { mult: 10, label: 'Hold eUSX for 3 months', partner: 'Yield Vault' },
+  S3_HOLD_JR_STRCUSX_DAILY: { mult: 20, label: 'Hold JR-strcUSX (junior tranche)', partner: 'strcUSX' },
+  S3_HOLD_SR_STRCUSX_DAILY: { mult: 15, label: 'Hold SR-strcUSX (senior tranche)', partner: 'strcUSX' },
+};
+const QUEST_EV_KEY = {
+  S3_HOLD_USX_1MO:'S3_HOLD_USX',  S3_HOLD_USX_3MO:'S3_HOLD_USX',
+  S3_HOLD_EUSX_1MO:'S3_HOLD_EUSX', S3_HOLD_EUSX_3MO:'S3_HOLD_EUSX',
+  S3_HOLD_JR_STRCUSX_DAILY:'S3_HOLD_JR_STRCUSX',
+  S3_HOLD_SR_STRCUSX_DAILY:'S3_HOLD_SR_STRCUSX',
+};
+const POS_KEY = {};
+// Per-HOLD-quest display config. `primary` marks the one row per family that
+// shows the underlying balance — the 3MO tier shares the 1MO tier's balance,
+// so only the 1MO row (or the single DAILY row) surfaces it.
+const HOLD_QUEST_INFO = {
+  S3_HOLD_USX_1MO:  { ek:'S3_HOLD_USX',  unit:'USX',  peg:1.0,  primary:true },
+  S3_HOLD_USX_3MO:  { ek:'S3_HOLD_USX',  unit:'USX',  peg:1.0,  primary:false },
+  S3_HOLD_EUSX_1MO: { ek:'S3_HOLD_EUSX', unit:'eUSX', peg:null, primary:true },
+  S3_HOLD_EUSX_3MO: { ek:'S3_HOLD_EUSX', unit:'eUSX', peg:null, primary:false },
+  S3_HOLD_JR_STRCUSX_DAILY: { ek:'S3_HOLD_JR_STRCUSX', unit:'JR-strcUSX', peg:1.0, primary:true },
+  S3_HOLD_SR_STRCUSX_DAILY: { ek:'S3_HOLD_SR_STRCUSX', unit:'SR-strcUSX', peg:1.0, primary:true },
+};
+
+function fmtTs(t) { if (!t) return '—'; return new Date(t*1000).toISOString().replace('T',' ').slice(0,16) + 'Z'; }
+function fmtAge(t) { if (!t) return '—'; const a = Math.floor(Date.now()/1000) - t; if (a<3600) return Math.floor(a/60)+'m ago'; if (a<86400) return Math.floor(a/3600)+'h ago'; return Math.floor(a/86400)+'d ago'; }
+
+let DRAWER_PAYLOAD = null;
+let DRAWER_SORT = 'desc';   // 'desc' = newest first, 'asc' = oldest first
+
+// Copy the drawer's wallet address. Briefly swap the clipboard icon for a
+// checkmark (~1.2s) — silent visual confirmation, no toast.
+function copyDrawerAddr(btn) {
+  const addr = (document.getElementById('dr-addr').textContent || '').trim();
+  if (!addr) return;
+  const finish = () => {
+    btn.classList.add('copied');
+    btn.setAttribute('title', 'Copied!');
+    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.setAttribute('title', 'Copy address');
+      btn.innerHTML = '<svg id="dr-copy-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(addr).then(finish).catch(() => {
+      // Fall through to legacy path
+      _legacyCopy(addr); finish();
+    });
+  } else {
+    _legacyCopy(addr); finish();
+  }
+}
+
+function _legacyCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+async function openDrawer(addr) {
+  document.getElementById('drawer').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  const addrEl = document.getElementById('dr-addr');
+  addrEl.textContent = addr;
+  addrEl.href = 'https://jup.ag/portfolio/' + addr;  // portfolio.jup.ag is deprecated — it redirects to jup.ag/portfolio and drops the address
+  document.getElementById('dr-content').innerHTML = '<div style="color:var(--ink-400); padding:20px 0;">Loading…</div>';
+  document.getElementById('dr-total').innerHTML = '';
+  if (!location.hash.endsWith(addr)) history.replaceState(null,'','#w/'+addr);
+  let p;
+  try {
+    const r = await fetch('wallets/' + addr + '.json');
+    if (!r.ok) throw new Error('not found');
+    p = await r.json();
+  } catch (e) {
+    document.getElementById('dr-content').innerHTML = '<div style="color:#f87171; padding:20px 0;">No data found for this wallet.</div>';
+    return;
+  }
+  // Hide quests that Solstice hasn't activated yet (currently 1MO/3MO HOLD bonuses).
+  // 1MO/3MO HOLD bonuses became active 2026-05-14 (1MO) — keeping the filter
+  // ready to drop any future quest Solstice has cached but not yet enabled.
+  const DISABLED_QUESTS = new Set([]);
+  if (Array.isArray(p.by_quest)) {
+    p.by_quest = p.by_quest.filter(q => !DISABLED_QUESTS.has(q.quest));
+  }
+  const meta = p.meta || {};
+  const isPda = meta.is_protocol_pda || meta.classification === 'pda_protocol';
+  const pdaSource = meta.pda_source;
+  const pdaLabel  = meta.pda_label;
+  const banner = document.getElementById('dr-pda-warning');
+  if (isPda) {
+    const heading = pdaSource === 'manual' && pdaLabel
+      ? `Protocol PDA — ${pdaLabel}`
+      : (pdaSource === 'manual' ? 'Known protocol PDA' : 'Auto-detected protocol PDA');
+    const note = pdaSource === 'manual'
+      ? 'Address manually labeled as a protocol-internal account (vault, strategy, or aggregator). Flares accrued here should pass through to the real users who deposited.'
+      : 'Address has no on-chain account or is owned by a non-System program. Likely a strategy contract or aggregator holding positions on behalf of many users. Flares should pass through to those underlying depositors.';
+    banner.innerHTML = `<strong>${heading}.</strong> ${note}`;
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
+  DRAWER_PAYLOAD = p;
+  _updateDrawerHeadline(p);
+  renderDrawerBody(p);
+}
+
+// (SLX projection calculator moved to /s2-calculator.html — see that page for logic.)
+
+// Partner ordering matches Solstice's flares dashboard: Solstice → Exponent →
+// Kamino → Orca → Raydium → Yield Vault (eUSX HOLD) → Loopscale.
+const PARTNER_ORDER = ['Solstice', 'Yield Vault', 'strcUSX'];
+
+// Partner is declared per-quest in QUEST_META (sourced from Solstice's
+// protocolCode). Falls back to 'Other' if a new quest is missing it.
+function _partnerFor(quest) {
+  return (QUEST_META[quest] && QUEST_META[quest].partner) || 'Other';
+}
+
+// Derive current raw token holding (amount + unit) for a quest, or null.
+// HOLD-only in S3 — driven entirely by HOLD_QUEST_INFO.
+function _rawHoldingFor(p, quest) {
+  const info = HOLD_QUEST_INFO[quest];
+  if (!info || !info.primary) return null;
+  const tl = ((p.evidence || {})[info.ek] || {}).timeline || [];
+  if (!tl.length) return null;
+  return { amount: tl[tl.length - 1][1] || 0, unit: info.unit };
+}
+
+// Dollar value for a quest: balance × peg for the family's primary row;
+// tvl_by_quest as the generic fallback for anything else.
+function _dollarFor(p, quest) {
+  const info = HOLD_QUEST_INFO[quest];
+  if (info) {
+    if (!info.primary) return null;
+    const tl = ((p.evidence || {})[info.ek] || {}).timeline || [];
+    if (!tl.length) return null;
+    const bal = tl[tl.length - 1][1] || 0;
+    const peg = info.peg != null ? info.peg : ((p.meta && p.meta.eusx_peg) || 1.0419);
+    return bal > 0 ? bal * peg : null;
+  }
+  const v = (p.tvl_by_quest || {})[quest];
+  return typeof v === 'number' && v > 0 ? v : null;
+}
+
+function renderQuestTable(p) {
+  const fmtFlaresInt = v => (v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const fmtFlaresDec = v => (v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const fmtAmt = (v, unit) => {
+    if (v == null) return '—';
+    const frac = (unit === 'USD' || unit === 'LP') ? 2 : 4;
+    return v.toLocaleString(undefined, { maximumFractionDigits: frac }) + (unit ? ' ' + unit : '');
+  };
+  const fmtUsd = v => '$' + (v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const flaresMap = {};
+  for (const q of p.by_quest || []) flaresMap[q.quest] = q.flares || 0;
+  const dailyMap = p.daily_emission_by_quest || {};
+  const tvlMap = p.tvl_by_quest || {};
+
+  // Group quests by partner; build per-partner rows + aggregate TVL and flares.
+  const groups = {};
+  for (const partner of PARTNER_ORDER) groups[partner] = { rows: [], tvl: 0, flares: 0 };
+  for (const quest of Object.keys(QUEST_META)) {
+    const meta = QUEST_META[quest];
+    const partner = meta.partner;
+    if (!groups[partner]) groups[partner] = { rows: [], tvl: 0, flares: 0 };
+    const flares = flaresMap[quest] || 0;
+    const daily = dailyMap[quest] || 0;
+    groups[partner].rows.push({
+      quest, label: meta.label, mult: meta.mult,
+      flares, daily,
+      raw: _rawHoldingFor(p, quest),
+      usd: _dollarFor(p, quest),
+      active: flares > 0 || daily > 0,
+    });
+    groups[partner].tvl += tvlMap[quest] || 0;
+    groups[partner].flares += flares;
+  }
+  // Credit the HOLD underlying balance once per partner (DAILY tier only — 1MO/3MO
+  // share the same balance). tvl_by_quest carries the primary HOLD rows, so it was
+  // ALREADY added in the loop above; only add here as a fallback when it's absent,
+  // or Current TVL double-counts the HOLD position.
+  for (const [q, info] of Object.entries(HOLD_QUEST_INFO)) {
+    if (!info.primary) continue;
+    if (tvlMap[q]) continue;   // already counted via tvl_by_quest — avoid double-count
+    const partner = (QUEST_META[q] || {}).partner;
+    const usd = _dollarFor(p, q);
+    if (usd && groups[partner]) groups[partner].tvl += usd;
+  }
+
+  const order = PARTNER_ORDER.filter(k => groups[k] && groups[k].rows.length);
+
+  const sections = order.map(partner => {
+    const g = groups[partner];
+    g.rows.sort((a, b) => (b.mult || 0) - (a.mult || 0));
+    const trs = g.rows.map(r => {
+      const cls = r.active ? '' : 'inactive';
+      const mult = (r.mult || 0) + '×';
+      const dailyCell = r.daily > 0 ? fmtFlaresDec(r.daily) : '—';
+      const totalCell = r.flares > 0 ? fmtFlaresDec(r.flares) : '—';
+      const rawCell = (r.raw && r.raw.amount > 0) ? fmtAmt(r.raw.amount, r.raw.unit) : '—';
+      const usdCell = (r.usd != null && r.usd > 0) ? fmtUsd(r.usd) : '—';
+      return `<tr class="${cls}">
+        <td class="cell-mult">${mult}</td>
+        <td class="left cell-quest">${r.label}</td>
+        <td class="cell-num">${dailyCell}</td>
+        <td class="cell-num">${totalCell}</td>
+        <td class="cell-num">${rawCell}</td>
+        <td class="cell-num">${usdCell}</td>
+      </tr>`;
+    }).join('');
+
+    const head = `
+      <div class="qpart-head">
+        <div class="qpart-name">${partner}</div>
+        <div class="qpart-stats">
+          <span class="qpart-stat"><span class="qpart-stat__lbl">Current TVL</span><span class="qpart-stat__val">${fmtUsd(g.tvl)}</span></span>
+          <span class="qpart-stat"><span class="qpart-stat__lbl">Total flares</span><span class="qpart-stat__val">${fmtFlaresInt(g.flares)}</span></span>
+        </div>
+      </div>`;
+
+    return `<section class="qpart">
+      ${head}
+      <div class="quest-table-wrap">
+        <table class="quest-table">
+          <thead>
+            <tr>
+              <th>Multiplier</th>
+              <th class="left">Quest</th>
+              <th>Daily Flares</th>
+              <th>Total Flares</th>
+              <th>Raw Amount</th>
+              <th>Dollar Amount</th>
+            </tr>
+          </thead>
+          <tbody>${trs}</tbody>
+        </table>
+      </div>
+    </section>`;
+  }).join('');
+
+  return `<div class="qparts">${sections}</div>`;
+}
+
+function renderDrawerBody(p) {
+  let body;
+  try {
+    body = renderQuestTable(p);
+  } catch (e) {
+    console.error('renderQuestTable failed:', e);
+    body = `<div style="color:var(--down); padding:24px; font-size:13px;">
+      <strong>Render error.</strong> ${(e && e.message) || e}<br/>
+      <span style="color:var(--text-3); font-size:11px;">See browser console for details.</span>
+    </div>`;
+  }
+  document.getElementById('dr-content').innerHTML = body;
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').style.display = 'none';
+  document.body.style.overflow = '';
+  if (location.hash.startsWith('#w/')) history.replaceState(null,'',location.pathname);
+}
+window.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+window.addEventListener('hashchange', () => { if (location.hash.startsWith('#w/')) openDrawer(location.hash.slice(3)); });
+
+<!-- main dashboard script below -->
+<!--ORIGINAL_SCRIPT_BELOW-->
+const PAGE_SIZE = 100;
+let RAW = null, sortKey = "total", sortDir = "desc", page = 0, filtered = [];
+
+const fmt = n => {
+  if (n == null) return "";
+  if (n === 0) return `<span class="zero">0</span>`;
+  if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + "B";
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(2) + "M";
+  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(2) + "K";
+  return n.toFixed(2);
+};
+const fmtUsd = n => n ? "$" + Math.round(n).toLocaleString() : `<span class="zero">$0</span>`;
+const short = w => w.slice(0,6) + "…" + w.slice(-4);
+
+let HIDE_PDAS = localStorage.getItem('hidePDAs') !== '0';  // default: hide
+// VIEW_MODE flips the headline stat, the table's Total column, and the
+// drawer's by-quest breakdown between cumulative S2 Flares and current TVL (USD).
+let VIEW_MODE = localStorage.getItem('viewMode') === 'tvl' ? 'tvl' : 'flares';
+// When true, hide wallets where current TVL is less than their S1 TWA TVL.
+// Catches S1 farmers who exited — high historical exposure, low current.
+let HIDE_TVL_BELOW_TWA = localStorage.getItem('hideTvlBelowTwa') === '1';
+
+// Compact $ formatter — mirrors fmt() but with leading $ and no decimals on big numbers.
+const fmtUsdShort = n => {
+  if (n == null) return "";
+  if (n === 0) return `<span class="zero">$0</span>`;
+  if (Math.abs(n) >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
+  if (Math.abs(n) >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
+  if (Math.abs(n) >= 1e3) return "$" + (n/1e3).toFixed(2) + "K";
+  return "$" + n.toFixed(2);
+};
+
+let DAILY = null;
+// Default to Solstice (official) — the headline series most users want to see.
+// Persisted per browser via localStorage.
+let CHART_MODE = (localStorage.getItem('chartMode') &&
+                  ['cumulative','inflation','solstice'].includes(localStorage.getItem('chartMode')))
+                ? localStorage.getItem('chartMode') : 'solstice';
+
+async function load() {
+  const r = await fetch("data.json");
+  RAW = await r.json();
+  // Daily-totals chart data (best-effort; chart hides if file missing)
+  try {
+    const dr = await fetch("daily_totals.json");
+    if (dr.ok) DAILY = await dr.json();
+  } catch (e) {}
+  renderChart();
+  // Compute two ranks: full leaderboard and real-users-only. The displayed
+  // rank flips when the user toggles "Hide PDAs" so #1 always reflects what's
+  // visible.
+  const byTotalAll = [...RAW.records].sort((a, b) => (b.total || 0) - (a.total || 0));
+  byTotalAll.forEach((r, i) => { r._globalRank = i + 1; });
+  const byTotalReal = byTotalAll.filter(r => !r.is_protocol_pda);
+  byTotalReal.forEach((r, i) => { r._realRank = i + 1; });
+  const updated = new Date(RAW.generated_at_utc).toLocaleString();
+  // (updated-timestamp label removed)
+  document.getElementById("footer-time").textContent = updated;
+  // Sync toggle button state
+  const btn = document.getElementById('toggle-pdas');
+  if (btn) btn.textContent = HIDE_PDAS ? 'Show PDAs' : 'Hide PDAs';
+  const vbtn = document.getElementById('toggle-view');
+  if (vbtn) vbtn.textContent = VIEW_MODE === 'tvl' ? 'Show Flares' : 'Show TVL';
+  const tvlBtn = document.getElementById('toggle-tvl-filter');
+  if (tvlBtn) tvlBtn.textContent = HIDE_TVL_BELOW_TWA ? 'Show TVL < TWA' : 'Hide TVL < TWA';
+  const th = document.getElementById('th-total');
+  if (th) th.textContent = VIEW_MODE === 'tvl' ? 'TVL' : 'Total';
+  renderStats();
+  applyFilters();
+}
+
+function onChartModeChange(v) {
+  if (!['cumulative','inflation','solstice'].includes(v)) return;
+  CHART_MODE = v;
+  localStorage.setItem('chartMode', v);
+  renderChart();
+}
+
+function renderChart() {
+  if (!DAILY || !DAILY.days || !DAILY.days.length) {
+    const sec = document.getElementById('chart-section');
+    if (sec) sec.style.display = 'none';
+    return;
+  }
+  // Solstice (official) mode draws a single-series bar chart from the
+  // flares_snapshots-derived solstice_series; partner stacking does not apply.
+  // Sync the dropdown selection — handles both the page-load init and any
+  // mode flip that came from elsewhere.
+  const sel = document.getElementById('chart-mode');
+  if (sel && sel.value !== CHART_MODE) sel.value = CHART_MODE;
+  if (CHART_MODE === 'solstice') {
+    const ss = (DAILY.solstice_series || []).filter(d => d.cumulative > 0);
+    if (!ss.length) { CHART_MODE = 'cumulative'; if (sel) sel.value = CHART_MODE; return renderChart(); }
+    renderSolsticeChart(ss); return;
+  }
+  const days = DAILY.days;
+  const partners = DAILY.partners || [];
+  // Per-bar total used for axis scaling — depends on mode.
+  // - cumulative: each bar height = cumulative total through that day
+  // - inflation:  each bar height = day's emission
+  const values = days.map(d => CHART_MODE === 'cumulative' ? d.cumulative : d.inflation);
+  const max = Math.max(...values, 1);
+  const chart = document.getElementById('chart');
+  const xax = document.getElementById('chart-x-axis');
+  const fmtAxis = v => v >= 1e9 ? (v/1e9).toFixed(1)+'B' : v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : Math.round(v).toLocaleString();
+  // Y-axis grid + labels (5 levels)
+  const yax = document.getElementById('chart-y-axis');
+  if (yax) {
+    let yhtml = '';
+    for (let k = 0; k <= 4; k++) {
+      const frac = 1 - k / 4;
+      const lvl = max * frac;
+      yhtml += `<div style="position:absolute; left:0; right:0; top:${k*60}px; border-top:1px dashed rgba(255,255,255,.06); padding-left:0;"><span style="position:absolute; left:0; top:-7px; font-size:10px; color:var(--ink-500); font-variant-numeric:tabular-nums;">${fmtAxis(lvl)}</span></div>`;
+    }
+    yax.innerHTML = yhtml;
+  }
+  // Sort partners by total descending so the biggest sits at the bottom of
+  // the stack (visually anchored, smaller partners read at top).
+  const partnerOrder = partners.slice().sort((a, b) =>
+    (DAILY.partner_totals?.[b] || 0) - (DAILY.partner_totals?.[a] || 0));
+  // Per-day partner value selector: cumulative or daily inflation.
+  const partnerVal = (d, p) => {
+    if (!d.by_partner || !d.by_partner[p]) return 0;
+    return CHART_MODE === 'cumulative' ? d.by_partner[p].cumulative : d.by_partner[p].inflation;
+  };
+  chart.innerHTML = days.map((d, i) => {
+    const v = values[i];
+    const fmtV = fmtAxis(v);
+    let segs = '';
+    let partsTooltip = [];
+    for (const p of partnerOrder) {
+      const flv = partnerVal(d, p);
+      if (flv <= 0) continue;
+      const segH = Math.max(0.5, Math.round(flv / max * 240));
+      segs += `<div style="height:${segH}px; background:${PARTNER_COLORS[p] || '#888'};"></div>`;
+      partsTooltip.push(`${PARTNER_LABELS[p] || p}: ${fmtAxis(flv)}`);
+    }
+    const inner = `<div style="width:100%; max-width:18px; display:flex; flex-direction:column-reverse; border-radius:2px 2px 0 0; overflow:hidden;">${segs}</div>`;
+    const modeLabel = CHART_MODE === 'cumulative' ? 'Cumulative' : 'Daily';
+    const tip = `${d.date}\n${modeLabel}: ${fmtAxis(v)}\n${partsTooltip.join('\n')}`;
+    return `<div class="has-hover-tip" data-tip="${tip.replace(/"/g,'&quot;')}" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-width:0; gap:3px;">
+      <div style="font-size:9px; color:var(--ink-300); font-variant-numeric:tabular-nums; line-height:1; white-space:nowrap;">${fmtV}</div>
+      ${inner}
+    </div>`;
+  }).join('');
+  // X-axis: show every 3rd day's date for readability
+  xax.innerHTML = days.map((d, i) => {
+    const show = (i % 3 === 0) || i === days.length - 1;
+    const lbl = show ? d.date.slice(5) : '';
+    return `<div style="flex:1; text-align:center; min-width:0; overflow:hidden;">${lbl}</div>`;
+  }).join('');
+  // Per-partner legend below the chart (always shown — chart is always stacked).
+  let legendEl = document.getElementById('chart-partner-legend');
+  if (!legendEl) {
+    legendEl = document.createElement('div');
+    legendEl.id = 'chart-partner-legend';
+    legendEl.style.cssText = 'display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; padding-left:54px; font-size:10px; color:var(--ink-400);';
+    xax.parentElement.appendChild(legendEl);
+  }
+  legendEl.innerHTML = partnerOrder
+    .filter(p => (DAILY.partner_totals?.[p] || 0) > 0)
+    .map(p => `<span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:2px; background:${PARTNER_COLORS[p] || '#888'};"></span>${PARTNER_LABELS[p] || p}</span>`)
+    .join('');
+}
+
+function renderSolsticeChart(ss) {
+  // Single-series view of Solstice's officially published total flares.
+  // Shows daily delta (inflation) — what the user can reference against.
+  const chart = document.getElementById('chart');
+  const xax = document.getElementById('chart-x-axis');
+  const yax = document.getElementById('chart-y-axis');
+  const fmtAxis = v => v >= 1e9 ? (v/1e9).toFixed(1)+'B' : v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : Math.round(v).toLocaleString();
+  const values = ss.map(d => d.inflation);
+  const max = Math.max(...values, 1);
+  if (yax) {
+    let yhtml = '';
+    for (let k = 0; k <= 4; k++) {
+      const lvl = max * (1 - k/4);
+      yhtml += `<div style="position:absolute; left:0; right:0; top:${k*60}px; border-top:1px dashed rgba(255,255,255,.06);"><span style="position:absolute; left:0; top:-7px; font-size:10px; color:var(--ink-500); font-variant-numeric:tabular-nums;">${fmtAxis(lvl)}</span></div>`;
+    }
+    yax.innerHTML = yhtml;
+  }
+  chart.innerHTML = ss.map(d => {
+    const v = d.inflation;
+    const h = Math.max(0.5, Math.round(v / max * 240));
+    const tip = `${d.date}\nSolstice cumulative: ${fmtAxis(d.cumulative)}\nDaily delta: ${fmtAxis(v)}`;
+    return `<div class="has-hover-tip" data-tip="${tip.replace(/"/g,'&quot;')}" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-width:0; gap:3px;">
+      <div style="font-size:9px; color:var(--ink-300); font-variant-numeric:tabular-nums; line-height:1; white-space:nowrap;">${fmtAxis(v)}</div>
+      <div style="width:100%; max-width:18px; height:${h}px; background:#10b981; border-radius:2px 2px 0 0;"></div>
+    </div>`;
+  }).join('');
+  xax.innerHTML = ss.map((d, i) => {
+    const show = (i % 3 === 0) || i === ss.length - 1;
+    return `<div style="flex:1; text-align:center; min-width:0; overflow:hidden;">${show ? d.date.slice(5) : ''}</div>`;
+  }).join('');
+  const legendEl = document.getElementById('chart-partner-legend');
+  if (legendEl) legendEl.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:2px; background:#10b981;"></span>Solstice published total — daily delta</span>';
+}
+
+function togglePDAs() {
+  HIDE_PDAS = !HIDE_PDAS;
+  localStorage.setItem('hidePDAs', HIDE_PDAS ? '1' : '0');
+  document.getElementById('toggle-pdas').textContent = HIDE_PDAS ? 'Show PDAs' : 'Hide PDAs';
+  renderStats();
+  applyFilters();
+}
+
+function toggleTvlFilter() {
+  HIDE_TVL_BELOW_TWA = !HIDE_TVL_BELOW_TWA;
+  localStorage.setItem('hideTvlBelowTwa', HIDE_TVL_BELOW_TWA ? '1' : '0');
+  const btn = document.getElementById('toggle-tvl-filter');
+  if (btn) btn.textContent = HIDE_TVL_BELOW_TWA ? 'Show TVL < TWA' : 'Hide TVL < TWA';
+  applyFilters();
+}
+
+function toggleView() {
+  VIEW_MODE = VIEW_MODE === 'flares' ? 'tvl' : 'flares';
+  localStorage.setItem('viewMode', VIEW_MODE);
+  const btn = document.getElementById('toggle-view');
+  if (btn) btn.textContent = VIEW_MODE === 'tvl' ? 'Show Flares' : 'Show TVL';
+  const th = document.getElementById('th-total');
+  if (th) th.textContent = VIEW_MODE === 'tvl' ? 'TVL' : 'Total';
+  renderStats();
+  applyFilters();
+  // If the drawer is open, re-render its body so the per-quest list flips too.
+  if (DRAWER_PAYLOAD && document.getElementById('drawer').style.display === 'block') {
+    renderDrawerBody(DRAWER_PAYLOAD);
+    _updateDrawerHeadline(DRAWER_PAYLOAD);
+  }
+}
+
+function _updateDrawerHeadline(p) {
+  const earning = (p.by_quest || []).filter(q => q.flares > 0).length;
+  const tvlMap = p.tvl_by_quest || {};
+  const totalTvl = p.total_tvl_usd || Object.values(tvlMap).reduce((a, b) => a + (b || 0), 0);
+
+  // Share-of-S3 callout: this wallet's flares as a percentage of the headline
+  // Solstice-published total (falls back to summed real users if not available).
+  let s2Total = 0;
+  if (typeof DAILY !== 'undefined' && DAILY && DAILY.solstice_series && DAILY.solstice_series.length) {
+    s2Total = DAILY.solstice_series[DAILY.solstice_series.length - 1].cumulative || 0;
+  }
+  if (!s2Total && typeof RAW !== 'undefined' && RAW && RAW.records) {
+    s2Total = RAW.records.reduce((a, r) => a + (r.total || 0), 0);
+  }
+  const sharePct = s2Total > 0 ? ((p.total_flares || 0) / s2Total * 100) : 0;
+  const shareStr = sharePct >= 0.01 ? sharePct.toFixed(3) + '%' : '<0.01%';
+
+  const totalFlaresStr = (p.total_flares || 0).toLocaleString(undefined, {maximumFractionDigits:0});
+  const totalQuests = p.by_quest ? p.by_quest.filter(q => (q.flares || 0) > 0).length : 0;
+  const totalQuestCount = p.by_quest ? p.by_quest.length : 0;
+
+  const el = document.getElementById('dr-total');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="dr-stats">
+      <div class="dr-stat" title="Sum of flares earned across all S3 quests this wallet is participating in.">
+        <span class="dr-stat__label">Total flares</span>
+        <span class="dr-stat__value accent">${totalFlaresStr}</span>
+      </div>
+      <div class="dr-stat" title="Current USD value of open HOLD balances across S3 quest families.">
+        <span class="dr-stat__label">Current TVL</span>
+        <span class="dr-stat__value">$${fmt(totalTvl)}</span>
+      </div>
+      <div class="dr-stat" title="Quests with positive flares accrued. The total counts the quest set this wallet has ever touched.">
+        <span class="dr-stat__label">Earning quests</span>
+        <span class="dr-stat__value">${earning} of ${totalQuestCount}</span>
+      </div>
+      <div class="dr-stat" title="This wallet's share of the Solstice-published S3 total flares.">
+        <span class="dr-stat__label">Share of S3</span>
+        <span class="dr-stat__value">${shareStr}</span>
+      </div>
+    </div>`;
+}
+
+function renderStats() {
+  const all = HIDE_PDAS ? RAW.records.filter(r => !r.is_protocol_pda) : RAW.records;
+  const realUsersFlares = all.reduce((a, r) => a + r.total, 0);
+  // Use Solstice's officially published total as the headline number when available.
+  let solsticeTotal = 0;
+  let solsticeDate = '';
+  if (DAILY && DAILY.solstice_series && DAILY.solstice_series.length) {
+    const last = DAILY.solstice_series[DAILY.solstice_series.length - 1];
+    solsticeTotal = last.cumulative || 0;
+    solsticeDate = last.date || '';
+  }
+  const headlineFlares = solsticeTotal > 0 ? solsticeTotal : realUsersFlares;
+  const flaresSub = solsticeTotal > 0
+    ? `Solstice published · ${solsticeDate}`
+    : (HIDE_PDAS ? '(excl. protocol PDAs)' : '(incl. protocol PDAs)');
+  // TVL aggregate over the currently-visible row set.
+  const totalTvl = all.reduce((a, r) => a + (r.tvl || 0), 0);
+  const isTvl = VIEW_MODE === 'tvl';
+  const headlineLabel = isTvl ? 'Total TVL' : 'Total flares';
+  const headlineValue = isTvl ? fmtUsdShort(totalTvl) : fmt(headlineFlares);
+  const headlineSub   = isTvl ? 'current snapshot · USD' : flaresSub;
+  const headlineTip   = isTvl
+    ? `Sum of current per-quest TVL across ${all.length.toLocaleString()} visible wallets.`
+    : `Solstice's officially published total flares (from their /api/flares/analytics). Real-user subset: ${fmt(realUsersFlares)}.`;
+  const s1 = all.filter(r => r.is_s1).length;
+  const newS2 = all.length - s1;
+  const subSuffix = HIDE_PDAS ? '(excl. protocol PDAs)' : '(incl. protocol PDAs)';
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat" title="Wallets earning S3 Flares on-chain. ${HIDE_PDAS ? 'Protocol PDAs hidden — toggle to include.' : 'All addresses incl. protocol PDAs.'}">
+      <div class="label">Earners</div>
+      <div class="v tabular">${all.length.toLocaleString()}</div>
+      <div class="sub">${subSuffix}</div>
+    </div>
+    <div class="stat" title="${headlineTip}">
+      <div class="label">${headlineLabel}</div>
+      <div class="v tabular accent">${headlineValue}</div>
+      <div class="sub">${headlineSub}</div>
+    </div>
+    <div class="stat" title="Earners that registered for the Season 1 airdrop.">
+      <div class="label">S1 retained</div>
+      <div class="v tabular">${s1.toLocaleString()}</div>
+      <div class="sub">${all.length ? (s1/all.length*100).toFixed(1) : '0'}% of earners</div>
+    </div>
+    <div class="stat" title="Earners that didn't register for S1 but are accruing S3 flares.">
+      <div class="label">New in S3</div>
+      <div class="v tabular">${newS2.toLocaleString()}</div>
+      <div class="sub">${all.length ? (newS2/all.length*100).toFixed(1) : '0'}% of earners</div>
+    </div>
+  `;
+  renderPartnerStats();
+}
+
+const PARTNER_LABELS = {
+  solstice: 'USX Hold',
+  yield_vault: 'eUSX Hold',
+  strcusx: 'strcUSX Tranches',
+};
+
+// One color per family — kept consistent between the donut and stacked chart.
+const PARTNER_COLORS = {
+  solstice:    '#fb7185',  // pink/coral (matches S2)
+  yield_vault: '#fbbf24',  // yellow (matches S2)
+  strcusx:     '#7c5cff',  // purple
+};
+
+function _partnerRows(allRecords) {
+  const partners = RAW.partners || ['solstice','yield_vault','strcusx'];
+  const totals = Object.fromEntries(partners.map(p => [p, 0]));
+  let grand = 0;
+  for (const r of allRecords) for (const p of partners) { const v = r[p] || 0; totals[p] += v; grand += v; }
+  let lastDayByPartner = {};
+  if (DAILY && DAILY.days && DAILY.days.length) {
+    const last = DAILY.days[DAILY.days.length - 1];
+    for (const p of partners) lastDayByPartner[p] = (last.by_partner && last.by_partner[p] && last.by_partner[p].inflation) || 0;
+  }
+  const rows = partners.map(p => ({p, tot: totals[p], rate: lastDayByPartner[p] || 0}))
+                      .filter(r => r.tot > 0)
+                      .sort((a, b) => b.tot - a.tot);
+  return {rows, grand};
+}
+
+function renderPartnerStats() {
+  const all = HIDE_PDAS ? RAW.records.filter(r => !r.is_protocol_pda) : RAW.records;
+  const {rows, grand} = _partnerRows(all);
+  if (!rows.length) {
+    document.getElementById('partner-stats').innerHTML = ''; return;
+  }
+  const size = 200, stroke = 28, radius = (size - stroke) / 2;
+  const cx = size / 2, cy = size / 2;
+  // Render arcs as explicit SVG paths instead of <circle> + stroke-dasharray.
+  // The dasharray trick rendered as a "bowtie" on some data shapes due to
+  // browser-specific dash-pattern wrapping; explicit arc commands always
+  // render cleanly. We rotate the start point to 12 o'clock (angle 0 = top).
+  const polar = (a) => [cx + radius * Math.sin(a), cy - radius * Math.cos(a)];
+  let acc = 0;   // cumulative angle (radians)
+  const TAU = 2 * Math.PI;
+  const arcs = rows.map(r => {
+    const frac = r.tot / grand;
+    const a0 = acc;
+    const a1 = acc + frac * TAU;
+    acc = a1;
+    const tip = `${PARTNER_LABELS[r.p] || r.p}\n${fmt(r.tot)} flares\n${(frac*100).toFixed(1)}% · +${fmt(r.rate)}/day`;
+    // Single-arc edge case: a full-circle path with M/A/A back to start.
+    if (frac >= 0.9999) {
+      // Draw two half-arcs since SVG `arc` can't represent a 360° single arc.
+      const [x0, y0] = polar(0);
+      const [x1, y1] = polar(Math.PI);
+      return `<path d="M ${x0} ${y0} A ${radius} ${radius} 0 0 1 ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x0} ${y0}"
+                    fill="none" stroke="${PARTNER_COLORS[r.p] || '#888'}" stroke-width="${stroke}"
+                    class="has-hover-tip" data-tip="${tip.replace(/"/g,'&quot;')}"></path>`;
+    }
+    const [x0, y0] = polar(a0);
+    const [x1, y1] = polar(a1);
+    const largeArc = (a1 - a0) > Math.PI ? 1 : 0;
+    return `<path d="M ${x0} ${y0} A ${radius} ${radius} 0 ${largeArc} 1 ${x1} ${y1}"
+                  fill="none" stroke="${PARTNER_COLORS[r.p] || '#888'}" stroke-width="${stroke}"
+                  class="has-hover-tip" data-tip="${tip.replace(/"/g,'&quot;')}"></path>`;
+  }).join('');
+  // Compact legend — color chip + name only, no numbers (tooltip on donut handles those).
+  const legend = rows.map(r => `
+      <span style="display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-300);">
+        <span style="width:10px; height:10px; border-radius:2px; background:${PARTNER_COLORS[r.p] || '#888'}; display:inline-block;"></span>${PARTNER_LABELS[r.p] || r.p}
+      </span>`).join('');
+  document.getElementById('partner-stats').innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+      <div style="position:relative; width:${size}px; height:${size}px;">
+        <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${arcs}</svg>
+        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;">
+          <div style="font-size:10px; color:var(--ink-500); text-transform:uppercase; letter-spacing:0.14em;">By family</div>
+          <div class="tabular accent" style="font-size:18px; font-weight:600; margin-top:4px;">${fmt(grand)}</div>
+        </div>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center;">${legend}</div>
+    </div>
+  `;
+}
+
+// === Custom fast tooltip ===
+// `title=""` attribute has a ~700ms delay before the browser shows it. We
+// roll our own that appears within ~80ms, follows the cursor, and supports
+// multi-line content via `data-tip` (newline-separated).
+(function initHoverTip(){
+  const tip = document.getElementById('hover-tooltip');
+  if (!tip) return;
+  document.addEventListener('mousemove', (e) => {
+    const t = e.target.closest('.has-hover-tip');
+    if (!t) {
+      tip.classList.remove('visible');
+      return;
+    }
+    const text = t.getAttribute('data-tip');
+    if (!text) return;
+    tip.textContent = text;
+    // Position above-right of cursor; nudge if overflowing right edge.
+    const x = e.clientX + 14, y = e.clientY + 14;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+    tip.classList.add('visible');
+    // After placement, check overflow and flip to left side if needed.
+    const r = tip.getBoundingClientRect();
+    if (r.right > window.innerWidth - 8) tip.style.left = (e.clientX - r.width - 14) + 'px';
+    if (r.bottom > window.innerHeight - 8) tip.style.top = (e.clientY - r.height - 14) + 'px';
+  });
+  document.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+})();
+
+function applyFilters() {
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  const proto = document.getElementById("protocol-filter").value;
+  let rs = RAW.records;
+  if (HIDE_PDAS) rs = rs.filter(r => !r.is_protocol_pda);
+  if (proto) rs = rs.filter(r => (r[proto] || 0) > 0);
+  if (HIDE_TVL_BELOW_TWA) {
+    // Filter out wallets where current TVL < TWA TVL (S1). Wallets with
+    // no S1 history (twa_tvl_s1 == null) are kept (no historical to compare).
+    rs = rs.filter(r => {
+      const twa = r.twa_tvl_s1;
+      if (twa == null) return true;
+      const tvl = r.tvl || 0;
+      return tvl >= twa;
+    });
+  }
+  if (q) rs = rs.filter(r => r.wallet.toLowerCase().includes(q));
+  const dir = sortDir === "asc" ? 1 : -1;
+  const rankField = HIDE_PDAS ? '_realRank' : '_globalRank';
+  // In TVL mode the "Total" column is backed by r.tvl, not r.total.
+  const effectiveSortKey = (sortKey === 'total' && VIEW_MODE === 'tvl') ? 'tvl' : sortKey;
+  rs.sort((a, b) => {
+    if (sortKey === "wallet") return dir * a.wallet.localeCompare(b.wallet);
+    if (sortKey === "rank") return dir * ((a[rankField] || 0) - (b[rankField] || 0));
+    return dir * ((a[effectiveSortKey] || 0) - (b[effectiveSortKey] || 0));
+  });
+  filtered = rs;
+  page = 0;
+  render();
+}
+
+function render() {
+  const start = page * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, filtered.length);
+  const rows = filtered.slice(start, end);
+  const tb = document.getElementById("tb");
+  tb.innerHTML = rows.map(r => {
+    const tags = [];
+    if (r.is_s1) tags.push(`<span class="tag s1">S1</span>`);
+    else tags.push(`<span class="tag new">NEW</span>`);
+    if (r.cohort) tags.push(`<span class="tag cohort">C${r.cohort}</span>`);
+    if (r.is_protocol_pda) {
+      const lbl = r.pda_label ? ` · ${r.pda_label}` : '';
+      const tip = r.pda_source === 'manual'
+        ? `Known protocol PDA${lbl} — flares should pass through to underlying user-depositors`
+        : `Auto-detected protocol PDA — uninit account or program-owned, not a real wallet`;
+      tags.push(`<span class="tag pda" title="${tip}">${r.pda_source === 'manual' ? 'PDA ✓' : 'PDA'}</span>`);
+    }
+    const totalCell = VIEW_MODE === 'tvl' ? fmtUsdShort(r.tvl || 0) : fmt(r.total);
+    return `<tr class="row-click" onclick="openDrawer('${r.wallet}')" title="${r.wallet}">
+      <td class="left tabular">${HIDE_PDAS ? (r._realRank ?? '—') : r._globalRank}</td>
+      <td class="left wallet">${short(r.wallet)} ${tags.join(' ')}</td>
+      <td class="tabular">${r.twa_tvl_s1 != null ? fmtUsdShort(r.twa_tvl_s1) : '<span style="opacity:.35">—</span>'}</td>
+      <td><span style="color: var(--accent-300); font-weight: 500;">${totalCell}</span></td>
+      <td>${fmt(r.solstice)}</td>
+      <td>${fmt(r.yield_vault)}</td>
+      <td>${fmt(r.strcusx)}</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("pageinfo").textContent =
+    `${start+1}–${end} of ${filtered.length.toLocaleString()}`;
+  const atFirst = page === 0;
+  const atLast  = end >= filtered.length;
+  for (const id of ['prev', 'prev-top']) document.getElementById(id).disabled = atFirst;
+  for (const id of ['next', 'next-top']) document.getElementById(id).disabled = atLast;
+}
+
+document.getElementById("search").addEventListener("input", applyFilters);
+document.getElementById("protocol-filter").addEventListener("change", applyFilters);
+// Pagination: keep current scroll position when paging — clicking Next from
+// the bottom of the page used to fling the user back to the top of the chart.
+function _goPrev() { if (page > 0) { page--; render(); } }
+function _goNext() { page++; render(); }
+document.getElementById("prev").addEventListener("click", _goPrev);
+document.getElementById("next").addEventListener("click", _goNext);
+document.getElementById("prev-top").addEventListener("click", _goPrev);
+document.getElementById("next-top").addEventListener("click", _goNext);
+document.querySelectorAll("th[data-key]").forEach(th => {
+  th.addEventListener("click", () => {
+    const key = th.dataset.key;
+    if (sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
+    else { sortKey = key; sortDir = (key === "wallet" || key === "rank") ? "asc" : "desc"; }
+    document.querySelectorAll("th").forEach(t => t.classList.remove("asc","desc"));
+    th.classList.add(sortDir);
+    applyFilters();
+  });
+});
+
+load();
+// Deep-link support: open drawer if URL has #w/<addr>
+if (location.hash.startsWith('#w/')) openDrawer(location.hash.slice(3));
+</script>
+</body>
+</html>
