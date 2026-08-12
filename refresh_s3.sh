@@ -56,7 +56,8 @@ echo "[$(date '+%H:%M:%S')] Phase 1: S3 HOLD TWAB cache"
   2>&1 | tee /tmp/walker_logs/s3_hold_cache.log | grep -E "USD-days|wallets with balance|⚠️|candidates|implied|closest" || true
 
 echo "[$(date '+%H:%M:%S')] Phase 2: S3 tier walkers"
-for w in gt_hold_usx_1mo gt_hold_eusx_1mo gt_hold_usx_3mo gt_hold_eusx_3mo gt_referral_bonus; do
+for w in gt_hold_usx_1mo gt_hold_eusx_1mo gt_hold_usx_3mo gt_hold_eusx_3mo \
+         gt_hold_jr_strcusx_daily gt_hold_sr_strcusx_daily gt_referral_bonus; do
   ( cd src && python3 -u -m flares_estimator.gt_walkers.$w ) > "/tmp/walker_logs/s3_$w.log" 2>&1 \
     && echo "    ✓ $w" || echo "    ✗ $w FAILED — see /tmp/walker_logs/s3_$w.log"
 done
