@@ -1,52 +1,135 @@
 {
-  "generated_at_utc": "2026-08-08T16:57:35.662862+00:00",
+  "generated_at_utc": "2026-08-12T02:44:15.162709+00:00",
   "s2_start_ts": 1785542400,
   "season": "S3",
-  "last_complete_midnight_ts": 1786147200,
-  "partners": [],
-  "partner_totals": {},
+  "last_complete_midnight_ts": 1786492800,
+  "partners": [
+    "yield_vault"
+  ],
+  "partner_totals": {
+    "yield_vault": 4156437.0
+  },
   "days": [
     {
       "date": "2026-08-01",
       "cumulative": 0.0,
       "inflation": 0.0,
-      "by_partner": {}
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 0.0,
+          "inflation": 0.0
+        }
+      }
     },
     {
       "date": "2026-08-02",
       "cumulative": 0.0,
       "inflation": 0.0,
-      "by_partner": {}
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 0.0,
+          "inflation": 0.0
+        }
+      }
     },
     {
       "date": "2026-08-03",
       "cumulative": 0.0,
       "inflation": 0.0,
-      "by_partner": {}
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 0.0,
+          "inflation": 0.0
+        }
+      }
     },
     {
       "date": "2026-08-04",
       "cumulative": 0.0,
       "inflation": 0.0,
-      "by_partner": {}
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 0.0,
+          "inflation": 0.0
+        }
+      }
     },
     {
       "date": "2026-08-05",
       "cumulative": 0.0,
       "inflation": 0.0,
-      "by_partner": {}
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 0.0,
+          "inflation": 0.0
+        }
+      }
     },
     {
       "date": "2026-08-06",
-      "cumulative": 0.0,
-      "inflation": 0.0,
-      "by_partner": {}
+      "cumulative": 1128.0,
+      "inflation": 1128.0,
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 1128.0,
+          "inflation": 1128.0
+        }
+      }
     },
     {
       "date": "2026-08-07",
-      "cumulative": 0.0,
-      "inflation": 0.0,
-      "by_partner": {}
+      "cumulative": 208303.0,
+      "inflation": 207175.0,
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 208303.0,
+          "inflation": 207175.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-08",
+      "cumulative": 638389.0,
+      "inflation": 430086.0,
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 638389.0,
+          "inflation": 430086.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-09",
+      "cumulative": 1068474.0,
+      "inflation": 430086.0,
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 1068474.0,
+          "inflation": 430086.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-10",
+      "cumulative": 1991694.0,
+      "inflation": 923220.0,
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 1991694.0,
+          "inflation": 923220.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-11",
+      "cumulative": 4156437.0,
+      "inflation": 2164743.0,
+      "by_partner": {
+        "yield_vault": {
+          "cumulative": 4156437.0,
+          "inflation": 2164743.0
+        }
+      }
     }
   ],
   "solstice_series": [
@@ -54,12 +137,32 @@
       "date": "2026-08-08",
       "cumulative": 10347353898.0,
       "inflation": 0
+    },
+    {
+      "date": "2026-08-09",
+      "cumulative": 11840764029.0,
+      "inflation": 1493410131.0
+    },
+    {
+      "date": "2026-08-10",
+      "cumulative": 13354092944.0,
+      "inflation": 1513328915.0
+    },
+    {
+      "date": "2026-08-11",
+      "cumulative": 14864537819.0,
+      "inflation": 1510444876.0
+    },
+    {
+      "date": "2026-08-12",
+      "cumulative": 16408996990.0,
+      "inflation": 1544459170.0
     }
   ],
   "sources": {
-    "reconstructed_through_last_midnight": 0.0,
-    "wallet_quests_grand_total_now": 0,
-    "wallet_quests_grand_total_non_pda": 0,
+    "reconstructed_through_last_midnight": 4156437.0,
+    "wallet_quests_grand_total_now": 4436642.0,
+    "wallet_quests_grand_total_non_pda": 4436642.0,
     "pda_excluded_count": 1944,
     "pda_excluded_flares": 0,
     "note": "Bars represent flares as of each day's 00:00 UTC. Today is in-progress and is omitted until tomorrow's 00:00 UTC. Protocol-PDA wallets are excluded to match Solstice's leaderboard."
