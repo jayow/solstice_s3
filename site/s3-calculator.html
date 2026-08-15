@@ -1309,7 +1309,11 @@ function renderResults() {
   }
   // YT Cost Basis stat (lives in assumptions readout, left side) — always
   // reflects current basis regardless of slx allocation state.
-  if (cbEl) cbEl.textContent = basis > 0 ? '$' + formatAmount(basis) : '—';
+  if (cbEl) {
+    const unpriced = (WALLET_CONTEXT && WALLET_CONTEXT.cost_basis
+                      && (WALLET_CONTEXT.cost_basis.unpriced || []).length) || 0;
+    cbEl.textContent = basis > 0 ? '$' + formatAmount(basis) : (unpriced ? 'n/a' : '—');
+  }
 
   // Build an ordered scenario list — sort the "NOW" live row inline by FDV
   // value so it lands between the projected scenarios at its natural spot.
@@ -1436,16 +1440,24 @@ function extractCostBasis(evidence) {
   // deposited" for those partners (useful as a yield-extracted signal), they
   // just don't aggregate into the calculator's ROI math.
   const breakdown = [];
+  const unpriced = [];
   const ev = evidence || {};
   const yt = ev.S3_EXPONENT_YT || {};
   for (const mb of (yt.by_market || [])) {
     const cb = mb.cost_basis;
     if (!cb || cb.usd_basis === undefined) continue;
-    breakdown.push({ label: YT_MARKET_LABEL[mb.market] || 'YT (unknown market)',
-                     usd: cb.usd_basis || 0 });
+    const label = YT_MARKET_LABEL[mb.market] || 'YT (unknown market)';
+    // `complete:false` means the priced fills cover less than 90% of the YT
+    // actually held — the basis describes a different position than the one
+    // on chain, so it is reported as unknown rather than as a small number.
+    if (cb.complete === false) {
+      unpriced.push({ label, held: cb.yt_held || 0, priced: cb.yt_priced || 0 });
+      continue;
+    }
+    breakdown.push({ label, usd: cb.usd_basis || 0 });
   }
   const total = breakdown.reduce((s, b) => s + b.usd, 0);
-  return { total, breakdown };
+  return { total, breakdown, unpriced };
 }
 
 async function calcLoadWallet() {
@@ -1498,7 +1510,7 @@ async function calcLoadWallet() {
     setUserTotalRaw(projected);
     // Pre-fill hint mentions YT decay if applicable
     const ytNote = ytDaily > 0
-      ? ` · YT emission (${formatAmount(ytDaily)}/d) capped at ${daysToMaturity.toFixed(1)}d (maturity 2026-06-01)`
+      ? ` · YT emission (${formatAmount(ytDaily)}/d) capped at ${daysToMaturity.toFixed(1)}d (maturity 2026-09-16)`
       : '';
     setPrefillTip('Pre-filled: ' + formatAmount(current) + ' today + projected '
       + formatAmount(projected - current) + ' across ' + days + ' days.' + ytNote
@@ -1519,6 +1531,23 @@ async function calcLoadWallet() {
           + '\n\nOnly YT positions count toward cost basis — YT decays to $0 at maturity. LP/Kamino/Loopscale/CLMM positions are capital-preserved (stablecoins withdrawable any time).'
         ).replace(/"/g, '&quot;');
         cbInfo.innerHTML = `<span class="has-hover-tip" data-tip="${tip}">ⓘ ${costBasis.breakdown.length} YT market${costBasis.breakdown.length===1?'':'s'}</span>`;
+      } else if ((costBasis.unpriced || []).length) {
+        // Say why it is blank. Exponent YT is acquired by taking liquidity as
+        // often as by making it, and only the MAKER side of a fill is recorded
+        // on chain in an attributable form — so for most wallets the purchase
+        // price is not observable anywhere we can index. Flares are unaffected:
+        // those come from observed daily balances, not from trades.
+        const tip = (costBasis.unpriced
+          .map(u => `${u.label}: holding ${Math.round(u.held).toLocaleString('en-US')} YT, `
+                  + `${Math.round(u.priced).toLocaleString('en-US')} priced from on-chain fills`)
+          .join('\n')
+          + '\n\nYT bought by taking liquidity (a market order) records only the '
+          + 'maker side on chain, so the price you paid is not observable. We '
+          + 'show no cost basis rather than a partial one, which would make the '
+          + 'breakeven FDV wrong. Your flares are unaffected — they come from '
+          + 'observed daily balances, not from trades.'
+        ).replace(/"/g, '&quot;');
+        cbInfo.innerHTML = `<span class="has-hover-tip" data-tip="${tip}">ⓘ cost basis not observable</span>`;
       } else {
         cbInfo.innerHTML = '';
       }
