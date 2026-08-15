@@ -47,16 +47,28 @@ jobs:
           python3 tools/capture_solstice_baseline.py data/solstice_totals.jsonl \
             --min-interval-hours "${{ inputs.min_interval_hours || '6' }}"
 
+      - name: Capture Exponent YT positions
+        id: yt
+        # YT flares are credited ONLY for days observed on-chain — position
+        # history cannot be reconstructed from events (three models were built
+        # and all three failed), so a missed snapshot is a permanently lost day.
+        # Runs here rather than locally so coverage does not depend on a laptop
+        # being awake. dataSlice keeps it to 80 bytes/position, ~2s, no secrets.
+        run: python3 tools/capture_yt_positions.py data/yt_positions.jsonl
+
       - name: Commit + push
-        if: steps.capture.outputs.appended == 'true'
+        if: steps.capture.outputs.appended == 'true' || steps.yt.outputs.appended == 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/solstice_totals.jsonl
+          git add data/solstice_totals.jsonl data/yt_positions.jsonl
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
             MSG="baseline: ${{ steps.capture.outputs.date_utc }} = ${{ steps.capture.outputs.total_flares }} flares"
+            if [ "${{ steps.yt.outputs.appended }}" = "true" ]; then
+              MSG="$MSG + YT positions"
+            fi
             # Surface a catalog change in the subject line — a new S3 partner
             # quest is the trigger to wire up a walker for it in the main repo.
             if [ "${{ steps.capture.outputs.quests_changed }}" = "true" ]; then
