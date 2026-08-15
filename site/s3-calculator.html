@@ -3,304 +3,1795 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Solstice S3 SLX Calculator · Hanyon Analytics</title>
+<title>S3 SLX Calculator · Hanyon Analytics</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
 <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <style>
 :root {
-  --bg: #0a0a0b; --bg-elev: #131316;
-  --hairline: rgba(255,255,255,.08); --hairline-strong: rgba(255,255,255,.12);
-  --text: #f5f5f7; --text-2: #a1a1a6; --text-3: #6e6e73;
-  --accent: rgb(252, 211, 77); --accent-dim: rgba(252,211,77,.12);
-  --up: #34d399; --down: #f87171; --warn: rgb(251, 191, 36);
+  /* Legacy ink/accent scale retained for share-card + tooltip back-compat */
+  --ink-50: rgb(232, 232, 237);
+  --ink-100: rgb(232, 232, 237);
+  --ink-200: rgb(201, 201, 208);
+  --ink-300: rgb(155, 155, 163);
+  --ink-400: rgb(122, 122, 131);
+  --ink-500: rgb(84, 84, 92);
+  --ink-700: rgb(40, 40, 46);
+  --ink-900: rgb(17, 17, 20);
+  --ink-950: rgb(10, 10, 12);
+  --accent-200: rgb(253, 230, 138);
+  --accent-300: rgb(252, 211, 77);
+  --accent-400: rgb(251, 191, 36);
+  --accent-500: rgb(245, 158, 11);
+
+  /* Stocks-app tokens */
+  --bg: #0a0a0b;
+  --bg-elev: #131316;
+  --hairline: rgba(255,255,255,.08);
+  --hairline-strong: rgba(255,255,255,.12);
+  --text: #f5f5f7;
+  --text-2: #a1a1a6;
+  --text-3: #6e6e73;
+  --accent: #fcd34d;
+  --accent-2: #fbbf24;
+  --accent-warm: #eb6237;
+  --up: #30d158;
+  --down: #ff453a;
+  --pill-up-bg: rgba(48,209,88,.15);
+  --pill-down-bg: rgba(255,69,58,.15);
+  --chip-underline: rgba(255,255,255,.22);
+  --ease: cubic-bezier(.4,0,.2,1);
+  --dur: .18s;
 }
+
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text);
-  font: 14px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased; }
-main { max-width: 1000px; margin: 0 auto; padding: 28px 24px 80px; }
-a { color: inherit; }
-.mono, .tabular { font-variant-numeric: tabular-nums; }
+html, body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: ui-sans-serif, -apple-system, "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+/* .mono and .tabular now both just enable tabular figures while keeping
+   the body sans-serif. Wallet address input overrides this explicitly. */
+.tabular, .mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.eyebrow { font-size: 11px; line-height: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-2); font-weight: 600; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-2); }
+.display { font-weight: 600; letter-spacing: -0.02em; }
 
-header { display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; flex-wrap: wrap; margin-bottom: 40px; }
-.brand { display: flex; align-items: center; gap: 12px; }
-.brand img { height: 30px; filter: invert(1); display: block; }
-.sep { color: var(--text-3); }
-.right-links { display: flex; align-items: center; gap: 10px; font-size: 12px;
-  letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
-.right-links a { text-decoration: none; }
-.right-links a:hover { color: var(--text); }
+/* ── Ticker bar ────────────────────────────────────────────────────────── */
+/* ── Layout ───────────────────────────────────────────────────────────── */
+main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; }
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+/* Two-column body at wide viewports: tabbed form panel | scenarios.
+   Wallet row + caption sit above (full-width), share CTA + disclosures below.
+   Collapses to single column under 960px. */
+.calc-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  margin-top: 36px;
+}
+@media (min-width: 960px) {
+  .calc-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+  }
+  .calc-body > * { min-width: 0; }
+  /* drop top margin so the panels align at the top of the grid */
+  .calc-body > .tabbed-panel { margin-top: 0; }
+  .calc-body > .fdv-section { margin-top: 0; }
+}
+.brand { display: flex; align-items: center; gap: 16px; color: var(--text-2); }
+.brand a { color: inherit; text-decoration: none; transition: color .15s; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.brand a:hover { color: var(--text); }
+.brand .sep { color: var(--text-3); }
+.right-links { display: flex; align-items: center; gap: 16px; font-size: 11px; }
+.right-links a { color: var(--text-3); text-decoration: none; text-transform: uppercase; letter-spacing: 0.12em; transition: color .15s; }
 .right-links a.featured { color: var(--accent); }
+.right-links a:hover { color: var(--text); }
+.right-links a.featured:hover { color: var(--accent-2); }
+.right-links .sep { color: var(--text-3); }
 
-.eyebrow { font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--text-3); display: block; margin-bottom: 10px; }
-h1 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 6px; }
-.lede { color: var(--text-2); font-size: 13px; margin: 0 0 28px; max-width: 70ch; }
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.hero { margin: 12px 0 22px; }
+.hero .eyebrow { margin-bottom: 14px; display: block; }
+.hero-line {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 14px;
+}
+.hero-num {
+  font-size: 72px; line-height: 76px; letter-spacing: -1.5px;
+  font-variant-numeric: tabular-nums; font-weight: 600;
+  color: var(--text); display: inline-block;
+}
+.hero-num .unit { font-size: 28px; color: var(--text-2); margin-left: 10px; letter-spacing: -0.02em; }
+/* Breakeven hero callout — inline next to the SLX hero number, baseline-aligned. */
+.hero-breakeven {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.hero-breakeven[hidden] { display: none; }
+.hero-breakeven__label {
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-3); font-weight: 600;
+}
+.hero-breakeven__fdv {
+  font-size: 24px; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+.hero-breakeven__sep { color: var(--text-3); opacity: 0.55; font-size: 24px; font-weight: 400; }
+.hero-breakeven__price {
+  font-size: 15px; font-weight: 600; color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.hero-breakeven__sub {
+  font-size: 13px; color: var(--text-3);
+  margin-left: auto;
+}
+.hero-breakeven__sub .mono { color: var(--text-2); font-weight: 600; }
 
-.notice { background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.32);
-  border-radius: 12px; padding: 16px 18px; margin-bottom: 32px; font-size: 13px;
-  line-height: 1.6; color: var(--text); }
-.notice strong { color: var(--warn); }
+/* ── Projection assumptions panel — labeled rows + native dropdowns ────── */
+.assumptions {
+  margin: 24px 0 28px;
+}
+.assumptions__header {
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-3); font-weight: 600;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 4px;
+}
+.assumptions__rows {
+  display: flex; flex-direction: column;
+}
+.assumptions__row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline);
+  gap: 16px;
+}
+.assumptions__label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: 0.005em;
+}
+.assumptions__control {
+  appearance: none; -webkit-appearance: none;
+  box-sizing: border-box;
+  background-color: rgba(252,211,77,0.10);
+  border: 1px solid rgba(252,211,77,0.36);
+  color: #fbbf24;
+  font-family: ui-sans-serif, -apple-system, "SF Pro Text", system-ui, sans-serif;
+  font-size: 15px; font-weight: 600;
+  padding: 8px 32px 8px 14px;
+  border-radius: 8px;
+  cursor: pointer; outline: none;
+  font-variant-numeric: tabular-nums;
+  min-width: 168px;
+  text-align: left;
+  transition: background-color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path stroke='%23fcd34d' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.assumptions__control:hover,
+.assumptions__control:focus {
+  background-color: rgba(252,211,77,0.18);
+  border-color: rgba(252,211,77,0.72);
+  color: #fde68a;
+}
+input[type=date].assumptions__control {
+  min-width: 168px; width: 168px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 14 14' fill='none'><rect x='1.5' y='2.5' width='11' height='10' rx='1.5' stroke='%23fcd34d' stroke-width='1.2'/><path stroke='%23fcd34d' stroke-width='1.2' stroke-linecap='round' d='M1.5 5h11M4.5 1v2M9.5 1v2'/></svg>");
+  position: relative;
+}
+input[type=date].assumptions__control::-webkit-calendar-picker-indicator {
+  opacity: 0; position: absolute; right: 0; width: 100%; height: 100%; cursor: pointer;
+}
+.assumptions__control option { background: var(--bg-elev); color: var(--text); }
+.assumptions__control option:checked { color: #fbbf24; }
 
-.grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-@media (min-width: 860px) { .grid { grid-template-columns: 380px 1fr; align-items: start; } }
+/* Text-type inputs styled as assumption controls (e.g. Your total flares in
+   Manual entry) should NOT show the dropdown chevron — they're free-form. */
+input[type=text].assumptions__control {
+  background-image: none;
+  padding-right: 14px;
+}
 
-.card { background: var(--bg-elev); border: 1px solid var(--hairline);
-  border-radius: 14px; padding: 22px; }
-.card h2 { font-size: 13px; font-weight: 600; margin: 0 0 18px;
-  letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); }
+/* Computed-values readout below the form (you/share/days) */
+.assumptions__readout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 18px 0 0;
+  margin-top: 4px;
+}
+.assumptions__stat {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.assumptions__stat-label {
+  font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-3); font-weight: 600;
+}
+.assumptions__stat-value {
+  font-size: 17px; font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+/* Variant for 3-stat readouts (Simulate panel) */
+.assumptions__readout--3col { grid-template-columns: repeat(3, 1fr); }
 
-.field { margin-bottom: 18px; }
-.field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 7px; }
-.field .hint { font-size: 11px; color: var(--text-3); margin-top: 5px; line-height: 1.5; }
-input[type=text], input[type=number], select {
-  width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--hairline-strong);
-  color: var(--text); border-radius: 9px; padding: 10px 12px; font-size: 14px;
-  font-variant-numeric: tabular-nums; font-family: inherit; }
-input:focus, select:focus { outline: none; border-color: rgba(252,211,77,.5); }
-select { appearance: none; -webkit-appearance: none; cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, var(--text-3) 50%),
-                    linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
-  background-position: calc(100% - 16px) 52%, calc(100% - 11px) 52%;
-  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+/* ── Tabbed panel (Projection assumptions / Simulate new deposit) ───── */
+.tabbed-panel { display: flex; flex-direction: column; }
+.tabbed-panel__tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 4px;
+}
+.tabbed-panel__tab {
+  appearance: none; background: transparent; border: 0;
+  color: var(--text-3);
+  font: inherit;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  font-weight: 600;
+  padding: 12px 0;
+  margin-right: 28px;
+  cursor: pointer; position: relative;
+  transition: color var(--dur) var(--ease);
+}
+.tabbed-panel__tab:hover { color: var(--text-2); }
+.tabbed-panel__tab.is-active { color: var(--accent); }
+.tabbed-panel__tab.is-active::after {
+  content: ""; position: absolute; left: 0; right: 28px; bottom: -1px;
+  height: 2px; background: var(--accent); border-radius: 1px;
+}
+.tabbed-panel__pane[hidden] { display: none; }
 
-.hero { border: 1px solid var(--hairline); border-radius: 14px; padding: 26px;
-  background: linear-gradient(180deg, rgba(252,211,77,.05), transparent 60%); margin-bottom: 20px; }
-.hero .v { font-size: 40px; font-weight: 650; letter-spacing: -.03em;
-  color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.1; }
-.hero .sub { color: var(--text-2); font-size: 13px; margin-top: 8px; }
+/* ── Wallet row ───────────────────────────────────────────────────────── */
+.wallet-row {
+  display: flex; align-items: center; gap: 10px;
+  height: 48px; padding: 0 12px;
+  background: var(--bg-elev); border: 1px solid var(--hairline);
+  border-radius: 10px;
+}
+.wallet-row .mag { color: var(--text-3); font-size: 14px; line-height: 1; }
+.wallet-row input[type=text] {
+  flex: 1 1 auto; min-width: 0;
+  background: transparent; border: 0; outline: 0; padding: 0;
+  color: var(--text); font: inherit;
+  font-size: 14px;
+}
+.wallet-row input[type=text]::placeholder { color: var(--text-3); }
+.btn-ghost {
+  appearance: none; background: transparent;
+  border: 1px solid var(--hairline-strong); color: var(--text-2);
+  padding: 6px 14px; border-radius: 8px;
+  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.btn-ghost:hover { background: rgba(255,255,255,.04); color: var(--text); border-color: rgba(255,255,255,.20); }
+.wallet-caption {
+  font-size: 15px; line-height: 22px; color: var(--text-2);
+  margin-top: 10px; padding-left: 2px;
+  display: flex; align-items: center; gap: 8px; min-height: 22px;
+}
+.wallet-caption .amber-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: none; }
+.wallet-caption.active .amber-dot { display: inline-block; }
 
-.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
-  gap: 18px 22px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--hairline); }
-.readout .k { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
-.readout .val { font-size: 17px; font-weight: 600; margin-top: 5px; font-variant-numeric: tabular-nums; }
+/* ── FDV scenario list (styled table) ─────────────────────────────────── */
+.fdv-section { margin: 24px 0 8px; }
+.fdv-section .label { display: block; margin-bottom: 6px; }
 
-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
-th, td { padding: 9px 10px; text-align: right; font-variant-numeric: tabular-nums; }
-th { font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--text-3); font-weight: 500; border-bottom: 1px solid var(--hairline); }
-td { border-bottom: 1px solid rgba(255,255,255,.04); }
-th:first-child, td:first-child { text-align: left; }
-tr.here td { background: var(--accent-dim); }
-tr.here td:first-child { font-weight: 600; }
+.fdv-table { width: 100%; border-collapse: collapse; font-size: 15px; display: block; }
+.fdv-table thead { display: none; }
+.fdv-table tbody { display: block; }
+/* Each row is a 3-col grid: label | usd | roi-pill, all vertically centered.
+   This way the breakeven row's 2-line label doesn't push the USD/ROI off-center. */
+.fdv-table tbody tr {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 14px;
+  border-top: 1px solid var(--hairline);
+  position: relative;
+}
+.fdv-table td {
+  padding: 0;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-size: 17px;
+  color: var(--text);
+  display: block;
+}
+.fdv-table td.fdv-label {
+  text-align: left;
+  color: var(--text); font-weight: 600;
+  font-family: ui-sans-serif, -apple-system, "SF Pro Text", system-ui, sans-serif;
+  font-size: 15px;
+}
+.fdv-table td.fdv-price { display: none; }
+.fdv-table td.fdv-usd { color: var(--text); font-weight: 600; font-size: 17px; text-align: right; white-space: nowrap; }
+.fdv-table td.fdv-roi {
+  margin: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+  font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+  background: rgba(255,255,255,.06);
+  color: var(--text-2);
+  border: 0;
+  text-align: center;
+  min-width: 52px;
+  white-space: nowrap;
+}
+.fdv-table td.fdv-roi.pos { background: var(--pill-up-bg); color: var(--up); }
+.fdv-table td.fdv-roi.neg { background: var(--pill-down-bg); color: var(--down); }
+/* Breakeven row gets amber left-rule (the inline yellow-tint bg from JS is
+   used as a selector hook — we override and replace with a clean left-rule). */
+.fdv-table tbody tr[style*="background"] {
+  background: transparent !important;
+  padding-left: 18px;
+}
+.fdv-table tbody tr[style*="background"]::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 12px; bottom: 12px;
+  width: 2px; background: var(--accent);
+  border-radius: 1px;
+}
+.fdv-table tbody tr[style*="background"] td.fdv-label > div:first-child { color: var(--accent); }
 
-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--hairline);
-  color: var(--text-3); font-size: 11.5px; line-height: 1.65; }
+/* Live "Current FDV" row — sourced from Jupiter, sorted inline by FDV value
+   so it lands at its natural position among the projected scenarios. */
+.fdv-table tbody tr.fdv-live-row td.fdv-label {
+  display: flex; align-items: center; gap: 10px;
+}
+.fdv-table tbody tr.fdv-live-row td.fdv-usd { color: var(--text); font-weight: 700; }
+
+/* No-basis state — collapse the ROI column entirely. The row grid becomes
+   2-col instead of 3-col, ROI cells hidden. Applies in Manual entry mode
+   (where there's no cost basis to compare against) or when no wallet is loaded. */
+.fdv-table.no-basis tbody tr { grid-template-columns: 1fr auto; }
+.fdv-table.no-basis td.fdv-roi { display: none; }
+.fdv-now-pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px;
+  background: rgba(34,197,94,0.16);
+  color: rgb(74,222,128);
+  border: 1px solid rgba(34,197,94,0.42);
+  border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Disclosure rows ──────────────────────────────────────────────────── */
+.disclosure {
+  border-top: 1px solid var(--hairline);
+  margin: 0;
+}
+.disclosure:last-of-type { border-bottom: 1px solid var(--hairline); }
+.disclosure summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 4px;
+  font-size: 15px; color: var(--text);
+  user-select: none;
+}
+.disclosure summary::-webkit-details-marker { display: none; }
+.disclosure summary::before {
+  content: "›";
+  display: inline-block;
+  color: var(--text-3); font-size: 18px;
+  transition: transform var(--dur) var(--ease);
+  width: 12px; text-align: center;
+}
+.disclosure[open] summary::before { transform: rotate(90deg); color: var(--accent); }
+.disclosure summary .arrow-after { margin-left: auto; color: var(--text-3); font-size: 13px; }
+.disclosure-body { padding: 4px 4px 22px 26px; }
+
+/* ── YT helper (inside disclosure) ────────────────────────────────────── */
+.form-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 0;
+  border-top: 1px solid var(--hairline);
+}
+.form-row:first-child { border-top: 0; }
+.form-row > label { font-size: 14px; color: var(--text-2); flex: 0 0 auto; }
+.form-row .ctrl { flex: 1 1 auto; max-width: 60%; text-align: right; }
+.form-row input[type=text], .form-row input[type=date], .form-row select {
+  width: 100%;
+  background: transparent; border: 0; padding: 6px 0;
+  color: var(--text); font: inherit; font-size: 15px; text-align: right;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.form-row select { appearance: none; padding-right: 2px; cursor: pointer; color: var(--text); }
+.form-row input[type=text]:focus, .form-row input[type=date]:focus { color: var(--accent); }
+.yt-out {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 14px;
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--bg-elev); border: 1px solid var(--hairline);
+  border-radius: 10px;
+  font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+.yt-out .lbl { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
+.yt-out .v { color: var(--text); font-weight: 600; margin-top: 4px; display: block; }
+.yt-out .v.accent { color: var(--accent); }
+
+/* ── Segmented controls ──────────────────────────────────────────────── */
+.segmented {
+  display: inline-flex; padding: 2px; gap: 0;
+  background: var(--bg-elev); border: 1px solid var(--hairline);
+  border-radius: 10px;
+}
+.segmented button {
+  appearance: none; background: transparent; border: 0;
+  color: var(--text-2); padding: 6px 12px;
+  font: inherit; font-size: 13px; font-weight: 500;
+  border-radius: 8px; cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  font-variant-numeric: tabular-nums;
+}
+.segmented button:hover { color: var(--text); }
+.segmented button[aria-pressed="true"] {
+  background: rgba(255,255,255,.10); color: var(--text);
+}
+
+/* ── Cost-basis caption styling (overrides inline styles applied by JS) ─ */
+#calc-cost-basis {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin-top: 6px !important;
+  font-size: 13px !important;
+  color: var(--text-2) !important;
+  line-height: 18px !important;
+  border-radius: 0 !important;
+}
+/* The three legacy hint spans are kept in the DOM (JS writes data-tip into
+   them), but the wallet caption now surfaces a single consolidated ⓘ glyph
+   via #wallet-info-ico. Hide originals to avoid the triple-ⓘ pile-up. */
+#calc-cost-basis,
+#calc-prefill-hint-ico,
+#calc-sys-hint-ico { display: none !important; }
+#wallet-info-ico {
+  color: var(--text-3); font-size: 11px; cursor: default;
+}
+
+/* ── Source + error captions ─────────────────────────────────────────── */
+#calc-source { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+#calc-error { color: var(--down); font-size: 13px; margin-top: 8px; }
+
+/* ── Hover tip (preserved from original) ─────────────────────────────── */
+#hover-tooltip {
+  position: fixed; pointer-events: none; z-index: 9999;
+  background: rgba(15, 17, 22, 0.96); border: 1px solid var(--hairline-strong);
+  border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--text);
+  font-variant-numeric: tabular-nums; white-space: pre-line;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  opacity: 0; transition: opacity .08s;
+}
+#hover-tooltip.visible { opacity: 1; }
+.has-hover-tip { cursor: default; }
+
+/* ── Primary Share CTA ───────────────────────────────────────────────── */
+.share-cta-wrap { margin-top: 28px; }
+#share-card-trigger.share-cta {
+  appearance: none; display: block; width: 100%;
+  height: 52px; padding: 0 18px;
+  border: 0; border-radius: 12px;
+  background: var(--accent); color: #0a0a0b;
+  font: inherit; font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+  font-size: 16px; font-weight: 700; letter-spacing: 0.01em;
+  cursor: pointer;
+  margin: 0;
+  text-decoration: none;
+  text-align: center;
+  line-height: 52px;
+  transition: background var(--dur) var(--ease), transform 80ms ease;
+}
+#share-card-trigger.share-cta:hover {
+  background: var(--accent-warm); color: #fff;
+  border: 0;
+}
+#share-card-trigger.share-cta:active { transform: translateY(1px); }
+
+/* Interactive chips (selects + date) — AMBER pill, same family as breakeven
+   and CTA, so the calculator has one accent color (less visual noise). */
+select.chip, input[type=date].chip, input[type=text].chip {
+  appearance: none; -webkit-appearance: none;
+  box-sizing: border-box;
+  background-color: rgba(252,211,77,0.10);
+  border: 1px solid rgba(252,211,77,0.36);
+  color: #fbbf24; font: inherit; font-weight: 600;
+  padding: 1px 24px 1px 10px;
+  margin: 0 2px;
+  border-radius: 7px;
+  cursor: pointer; outline: none;
+  font-variant-numeric: tabular-nums;
+  position: relative;
+  vertical-align: baseline;
+  line-height: 22px;
+  transition: background-color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              color var(--dur) var(--ease),
+              transform var(--dur) var(--ease);
+  /* Chevron — amber to match the chip */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path stroke='%23fcd34d' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+select.chip:hover, input[type=date].chip:hover,
+select.chip:focus, input[type=date].chip:focus {
+  background-color: rgba(252,211,77,0.20);
+  border-color: rgba(252,211,77,0.72);
+  color: #fde68a;
+  transform: translateY(-1px);
+}
+/* Date chip: wider so the full year shows; calendar glyph instead of chevron */
+input[type=date].chip {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 14 14' fill='none'><rect x='1.5' y='2.5' width='11' height='10' rx='1.5' stroke='%23fcd34d' stroke-width='1.2'/><path stroke='%23fcd34d' stroke-width='1.2' stroke-linecap='round' d='M1.5 5h11M4.5 1v2M9.5 1v2'/></svg>");
+  background-position: right 8px center;
+  padding-right: 28px;
+  min-width: 162px;
+  width: 162px;
+}
+input[type=date].chip::-webkit-calendar-picker-indicator {
+  opacity: 0; position: absolute; right: 0; width: 100%; height: 100%; cursor: pointer;
+}
+select.chip option { background: var(--bg-elev); color: var(--text); }
+select.chip option:checked { color: #fbbf24; }
+
+/* Read-only value chips — same vertical rhythm as the editable ones */
+.projection .chip:not(select):not(input) {
+  vertical-align: baseline;
+  line-height: 22px;
+  padding: 1px 8px;
+}
+
+footer { text-align: center; color: var(--text-3); font-size: 11px; margin-top: 40px; }
+
+/* ── Mobile ──────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  body { font-size: 14px; }
+  main { padding: 18px 14px 80px; max-width: none; }
+  header { flex-direction: column; align-items: flex-start; gap: 10px; height: auto; margin-bottom: 20px; }
+  .brand { flex-wrap: wrap; gap: 8px; }
+  .brand img { height: 22px !important; }
+  .right-links { font-size: 10px; gap: 10px; flex-wrap: wrap; width: 100%; }
+
+  .hero-num { font-size: 56px; line-height: 60px; letter-spacing: -1.2px; }
+  .hero-num .unit { display: block; font-size: 18px; margin: 4px 0 0; }
+  .assumptions__row {
+    flex-direction: column; align-items: stretch; gap: 6px;
+    padding: 12px 0;
+  }
+  .assumptions__label { font-size: 12px; }
+  .assumptions__control { width: 100%; min-width: 0; font-size: 15px; }
+  input[type=date].assumptions__control { width: 100%; min-width: 0; }
+  .assumptions__readout { grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+
+  .fdv-table td { padding: 14px 0; font-size: 16px; }
+  .fdv-table td.fdv-label { font-size: 14px; padding-right: 8px; }
+  .fdv-table td.fdv-usd { font-size: 16px; }
+  .fdv-table tbody tr { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 12px 4px; }
+  .fdv-table tbody tr td { padding: 0; text-align: left; }
+  .fdv-table tbody tr td.fdv-usd { text-align: left; }
+  .fdv-table tbody tr td.fdv-roi { margin-left: 0; margin-top: 4px; }
+  .fdv-table tbody tr[style*="background"] td:first-child { padding-left: 10px; }
+
+  .form-row { flex-direction: column; align-items: stretch; gap: 4px; }
+  .form-row .ctrl { max-width: none; text-align: left; }
+  .form-row input[type=text], .form-row input[type=date], .form-row select { text-align: left; }
+
+  .yt-out { grid-template-columns: 1fr 1fr; }
+  .yt-out > div:nth-child(3) { grid-column: 1 / -1; }
+
+  .share-cta {
+    position: sticky; bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  }
+}
+
 </style>
 </head>
 <body>
+
+<div id="hover-tooltip"></div>
+
 <main>
   <header>
     <div class="brand">
-      <a href="https://solstice.finance" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
-        <img src="logos/solstice-text.svg" alt="Solstice" />
+      <a href="index.html" style="display:inline-flex; align-items:center;">
+        <img src="logos/solstice-text.svg" alt="Solstice" style="height: 28px; display:block; filter: invert(1);" />
       </a>
       <span class="sep">·</span>
-      <span style="font-size:12px;color:var(--text-2);">S3 SLX Calculator by
-        <a href="https://hanyon.app" target="_blank" rel="noopener noreferrer"
-           style="color:var(--text);text-decoration:underline dotted;text-underline-offset:3px;">Hanyon Analytics</a></span>
+      <span class="display" style="font-size: 12px; color: var(--text-2);">
+        S3 Calculator by
+        <a href="https://hanyon.app" target="_blank" rel="noopener noreferrer" style="color: var(--text); text-decoration: underline dotted; text-underline-offset: 3px;">Hanyon Analytics</a>
+      </span>
     </div>
     <div class="right-links">
       <a href="index.html">← S3 Leaderboard</a>
+      <span class="sep">·</span>
+      <a href="https://s2.solstice.hanyon.app/slx-depth.html" target="_blank" rel="noopener noreferrer">SLX Depth ↗</a>
       <span class="sep">·</span>
       <a href="https://app.solstice.finance/?ref=z763qy4JcE" class="featured" target="_blank" rel="noopener noreferrer">Join Solstice ↗</a>
     </div>
   </header>
 
-  <span class="eyebrow">Season 3</span>
-  <h1>What might my flares be worth?</h1>
-  <p class="lede">Your flares divided by the season total, times whatever SLX ends up being allocated to Season 3.
-     The first two numbers we measure on-chain. The third nobody knows yet — so it is an input, not an assumption.</p>
+  <!-- ── Hero: SLX allocation + breakeven scenario ──────────────────────── -->
+  <section class="hero" aria-label="Your SLX allocation">
+    <span class="eyebrow">Your allocation</span>
+    <div class="hero-line">
+      <span class="hero-num tabular" id="calc-slx">—</span>
+      <span class="hero-breakeven" id="hero-breakeven" hidden>
+        <span class="hero-breakeven__sep">/</span>
+        <span class="hero-breakeven__fdv mono" id="hero-breakeven-fdv">—</span>
+        <span class="hero-breakeven__label">breakeven</span>
+      </span>
+    </div>
+  </section>
 
-  <div class="notice">
-    <strong>The S3 allocation has not been announced.</strong>
-    Solstice publishes a campaign-wide SLX base of <span class="mono" id="api-base">7.5%</span> of a
-    <span class="mono">1,000,000,000</span> SLX supply, but has not said how much of that lands on Season 3
-    specifically. Every figure below therefore moves linearly with the allocation you choose — treat it as
-    "what if", not a forecast. S2's own allocation shifted more than once before it settled.
-  </div>
+  <!-- ── Two-column body (wide) / stacked (narrow) ─────────────────────── -->
+  <div class="calc-body">
 
-  <div class="grid">
-    <div class="card">
-      <h2>Inputs</h2>
-
-      <div class="field">
-        <label for="wallet">Wallet (optional)</label>
-        <input type="text" id="wallet" placeholder="Paste an address to auto-fill" autocomplete="off" />
-        <div class="hint" id="wallet-hint">Looks your flares up from the S3 leaderboard.</div>
-      </div>
-
-      <div class="field">
-        <label for="flares">Your S3 flares</label>
-        <input type="number" id="flares" value="0" min="0" step="any" />
-        <div class="hint">Edit freely to model a bigger position.</div>
-      </div>
-
-      <div class="field">
-        <label for="total">Season total flares</label>
-        <input type="number" id="total" value="0" min="1" step="any" />
-        <div class="hint" id="total-hint">Solstice's published total.</div>
-      </div>
-
-      <div class="field">
-        <label for="alloc">SLX allocated to Season 3</label>
-        <select id="alloc">
-          <option value="10000000">10,000,000 SLX (1.0% of supply)</option>
-          <option value="18750000" selected>18,750,000 SLX (1.875% — campaign base ÷ 4 seasons)</option>
-          <option value="25000000">25,000,000 SLX (2.5%)</option>
-          <option value="37500000">37,500,000 SLX (3.75% — half the campaign base)</option>
-          <option value="75000000">75,000,000 SLX (7.5% — the entire campaign base)</option>
-          <option value="custom">Custom…</option>
-        </select>
-        <input type="number" id="alloc-custom" placeholder="SLX" style="margin-top:8px;display:none" min="0" step="any" />
-        <div class="hint"><strong style="color:var(--warn)">Unconfirmed.</strong> The default splits the 7.5%
-          campaign base evenly across four seasons — a guess, chosen only because it is neutral.</div>
-      </div>
-
-      <div class="field" style="margin-bottom:0">
-        <label for="price">SLX price (USD)</label>
-        <input type="number" id="price" value="1.00" min="0" step="any" />
-        <div class="hint">No market price exists pre-TGE. $1.00 is a placeholder for arithmetic.</div>
-      </div>
+  <!-- ── Tabbed form panel: Projection assumptions / Simulate new deposit ── -->
+  <div class="tabbed-panel">
+    <div class="tabbed-panel__tabs">
+      <button class="tabbed-panel__tab is-active" type="button" data-pane="assumptions">Load wallet</button>
+      <button class="tabbed-panel__tab" type="button" data-pane="simulate">Simulate new deposit</button>
+      <button class="tabbed-panel__tab" type="button" data-pane="manual">Manual entry</button>
     </div>
 
-    <div>
-      <div class="hero">
-        <span class="eyebrow">Your estimated allocation</span>
-        <div class="v" id="out-slx">—</div>
-        <div class="sub" id="out-usd">—</div>
-        <div class="readout">
-          <div><div class="k">Your share</div><div class="val" id="out-share">—</div></div>
-          <div><div class="k">Flares per SLX</div><div class="val" id="out-per">—</div></div>
-          <div><div class="k">Season day</div><div class="val" id="out-day">—</div></div>
-          <div><div class="k">Your rank</div><div class="val" id="out-rank">—</div></div>
+    <div class="tabbed-panel__pane" data-pane="assumptions">
+      <div class="assumptions">
+        <div class="wallet-row">
+          <span class="mag" aria-hidden="true">⌕</span>
+          <input id="calc-wallet" type="text" placeholder="Paste wallet address"
+                 autocomplete="off"
+                 onkeydown="if(event.key==='Enter') calcLoadWallet()" />
+          <button class="btn-ghost" onclick="calcLoadWallet()">Load</button>
+        </div>
+        <div class="wallet-caption" id="wallet-caption-row">
+          <span class="amber-dot" aria-hidden="true"></span>
+          <span id="calc-source"></span>
+          <span id="wallet-info-ico" class="has-hover-tip" data-tip="" style="display:none;">ⓘ</span>
+          <span id="calc-error" style="display:none;"></span>
+          <span id="calc-cost-basis"></span>
+          <span id="calc-prefill-hint-ico" class="has-hover-tip" data-tip=""></span>
+          <span id="calc-sys-hint-ico" class="has-hover-tip" data-tip=""></span>
+        </div>
+        <div class="assumptions__rows">
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="calc-end">End date</label>
+            <input type="date" id="calc-end" class="assumptions__control"
+                   value="2026-12-01" min="2026-08-01" max="2026-12-01"
+                   onchange="onEndDateChange()" />
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="calc-your-mult">Loyalty mult</label>
+            <select id="calc-your-mult" class="assumptions__control" onchange="onLoyaltyChange()" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
+              <option value="1.0" selected>1.0× — n/a in S3</option>
+            </select>
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="calc-avg-mult">Avg system</label>
+            <select id="calc-avg-mult" class="assumptions__control" onchange="onLoyaltyChange()" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
+              <option value="1.0" selected>1.0× — n/a in S3</option>
+            </select>
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="calc-airdrop-pct">SLX bucket</label>
+            <select id="calc-airdrop-pct" class="assumptions__control" onchange="onAnyInput()">
+              <option value="0.01">1.00% — 10M SLX</option>
+              <option value="0.01875" selected>1.875% — 18.75M SLX</option>
+              <option value="0.025">2.50% — 25M SLX</option>
+              <option value="0.0375">3.75% — 37.5M SLX</option>
+              <option value="0.075">7.50% — 75M SLX (campaign base)</option>
+            </select>
+          </div>
+        </div>
+        <div class="assumptions__readout">
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">YT Cost Basis</span>
+            <span class="assumptions__stat-value mono" id="hero-breakeven-basis">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">You at end</span>
+            <span class="assumptions__stat-value mono" id="calc-you">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">Your share</span>
+            <span class="assumptions__stat-value mono" id="calc-share">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">Days ahead</span>
+            <span class="assumptions__stat-value mono"><span id="calc-days">—</span> Days</span>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="card">
-        <h2>Across allocation scenarios</h2>
-        <table id="scen">
-          <thead><tr><th>S3 allocation</th><th>% of supply</th><th>Your SLX</th><th>At $1.00</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <p class="hint" style="margin:14px 2px 0;color:var(--text-3);font-size:11px;">
-          Linear in the allocation: double it and your SLX doubles. The share is what the dashboard measures;
-          the allocation is what Solstice has yet to announce.</p>
+    <div class="tabbed-panel__pane" data-pane="simulate" hidden>
+      <div class="assumptions" id="yt-helper">
+        <!-- Applied-to-SLX controls FIRST (above the deposit row) — these are
+             the params the SLX calc uses. All three are SYNCED with the same
+             selects in the Load wallet tab via _syncFromSimTab() / _syncFromMainTab(). -->
+        <div class="assumptions__rows">
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="sim-your-mult">Loyalty mult</label>
+            <select id="sim-your-mult" class="assumptions__control" onchange="_syncFromSimTab(this, 'calc-your-mult')" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
+              <option value="1.0" selected>1.0× — n/a in S3</option>
+            </select>
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="sim-avg-mult">Avg system</label>
+            <select id="sim-avg-mult" class="assumptions__control" onchange="_syncFromSimTab(this, 'calc-avg-mult')" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
+              <option value="1.0" selected>1.0× — n/a in S3</option>
+            </select>
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="sim-airdrop-pct">SLX bucket</label>
+            <select id="sim-airdrop-pct" class="assumptions__control" onchange="_syncFromSimTab(this, 'calc-airdrop-pct')">
+              <option value="0.01">1.00% — 10M SLX</option>
+              <option value="0.01875" selected>1.875% — 18.75M SLX</option>
+              <option value="0.025">2.50% — 25M SLX</option>
+              <option value="0.0375">3.75% — 37.5M SLX</option>
+              <option value="0.075">7.50% — 75M SLX (campaign base)</option>
+            </select>
+          </div>
+        </div>
+        <!-- Deposit + market + Simulate button BELOW the params row -->
+        <div class="assumptions__rows" id="yt-helper-grid" style="margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px;">
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="yt-deposit">Deposit amount</label>
+            <input id="yt-deposit" type="text" inputmode="decimal" class="assumptions__control"
+                   value="100" placeholder="e.g. 100 or 5K"
+                   oninput="onYtInput()" onblur="onAmountBlur(this)" onfocus="onAmountFocus(this)" />
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="yt-market">YT market
+              <span class="has-hover-tip" data-tip="Live YT prices from Exponent. Projection caps at S3 end (Dec 1)." style="color:var(--text-3); font-size:11px; margin-left:4px;">ⓘ</span>
+            </label>
+            <select id="yt-market" class="assumptions__control" onchange="onYtInput()">
+              <option value="">Loading…</option>
+            </select>
+          </div>
+          <div class="assumptions__row">
+            <button class="btn-ghost" onclick="ytHelperApply()" style="width: 100%;">Simulate</button>
+          </div>
+        </div>
+        <div id="yt-helper-out" class="assumptions__readout">
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">YT received</span>
+            <span class="assumptions__stat-value mono" id="yt-out-yt">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">Daily flares</span>
+            <span class="assumptions__stat-value mono" id="yt-out-daily">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">Duration</span>
+            <span class="assumptions__stat-value mono" id="yt-out-duration">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">Total to S3 end</span>
+            <span class="assumptions__stat-value mono" id="yt-out-total" style="color: var(--accent);">—</span>
+          </div>
+        </div>
+        <div class="assumptions__readout" style="margin-top: 8px;">
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label" title="System-wide total flares at S3 end">Sys total</span>
+            <span class="assumptions__stat-value mono" id="yt-out-systotal">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label" title="Your share of the system total">Your share</span>
+            <span class="assumptions__stat-value mono" id="yt-out-share">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label" title="Your projected SLX for this simulated deposit">Projected SLX</span>
+            <span class="assumptions__stat-value mono" id="yt-out-slx" style="color: var(--accent);">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabbed-panel__pane" data-pane="manual" hidden>
+      <div class="assumptions">
+        <div class="assumptions__rows">
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="calc-total">Your total flares</label>
+            <input id="calc-total" type="text" value="0" inputmode="decimal" class="assumptions__control" placeholder="e.g. 327M"
+                   oninput="onUserTotalEdit(this)" onblur="onUserTotalBlur(this)" onfocus="onAmountFocus(this)" />
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="calc-sys-total">System total flares</label>
+            <input id="calc-sys-total" type="text" value="0" inputmode="decimal" class="assumptions__control" placeholder="e.g. 170B"
+                   oninput="onSysTotalEdit(this)" onblur="onSysTotalBlur(this)" onfocus="onAmountFocus(this)" />
+          </div>
+          <div class="assumptions__row">
+            <label class="assumptions__label" for="calc-airdrop-pct-m">SLX bucket</label>
+            <select id="calc-airdrop-pct-m" class="assumptions__control">
+              <option value="0.01">1.00% — 10M SLX</option>
+              <option value="0.01875" selected>1.875% — 18.75M SLX</option>
+              <option value="0.025">2.50% — 25M SLX</option>
+              <option value="0.0375">3.75% — 37.5M SLX</option>
+              <option value="0.075">7.50% — 75M SLX (campaign base)</option>
+            </select>
+          </div>
+        </div>
+        <div class="assumptions__readout assumptions__readout--3col">
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">You at end</span>
+            <span class="assumptions__stat-value mono" id="m-you">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">Your share</span>
+            <span class="assumptions__stat-value mono" id="m-share">—</span>
+          </div>
+          <div class="assumptions__stat">
+            <span class="assumptions__stat-label">Days ahead</span>
+            <span class="assumptions__stat-value mono"><span id="m-days">—</span> Days</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <footer>
-    <strong style="color:var(--text-2)">How the share is computed.</strong>
-    Your flares come from this project's independent on-chain indexing — every quest walked from Solana state
-    and multiplied by Solstice's published multiplier. The season total is Solstice's own published figure, so
-    the ratio compares our measurement against their denominator and will not match their per-wallet display
-    exactly. Exponent YT is credited only for days observed on-chain, so YT-heavy wallets read as a floor.
-    Referral flares are not on-chain and are never included.
-    <br /><br />
-    Not affiliated with Solstice Finance. Nothing here is financial advice, and no part of it is a prediction
-    of what SLX will be worth.
-  </footer>
+  <!-- ── FDV scenarios (Watchlist style) ────────────────────────────────── -->
+  <div class="fdv-section">
+    <span class="label">Scenarios</span>
+    <table class="fdv-table">
+      <thead>
+        <tr><th class="left">FDV</th><th>SLX price</th><th>Your USD value</th><th id="calc-fdv-roi-head">vs YT cost</th></tr>
+      </thead>
+      <tbody id="calc-fdv-rows"></tbody>
+    </table>
+  </div>
+
+  </div>
+
+  <!-- ── Primary CTA ────────────────────────────────────────────────────── -->
+  <div class="share-cta-wrap">
+    <a id="share-card-trigger" class="share-cta" href="https://twitter.com/jayowtrades" target="_blank" rel="noopener noreferrer">Follow @jayowtrades to support</a>
+  </div>
+
+  <!-- ── Disclosure: About these numbers ───────────────────────────────── -->
+  <details class="disclosure">
+    <summary>About these numbers</summary>
+    <div class="disclosure-body" style="font-size: 13px; line-height: 20px; color: var(--text-2);">
+      <p style="margin: 0 0 12px;">
+        System total at end date is pre-projected from <strong style="color: var(--text);">Solstice's officially published daily delta</strong> (7-day average) — same source the dashboard's "Solstice (official)" chart uses.
+        Changing the end date refreshes the projection.
+      </p>
+      <p style="margin: 0 0 12px;">
+        The "SLX bucket" picker is a WHAT-IF. Solstice publishes a campaign-wide base of 7.5% of supply but has NOT announced how much goes to Season 3; the 1.875% default is that base divided by four seasons. Every number scales linearly with whatever you pick.
+      </p>
+      <p style="margin: 0;">
+        <strong style="color: var(--text);">No loyalty multiplier is modelled.</strong> Solstice applied one at the end of S2 against an S1 TWA baseline; nothing equivalent has been published for S3, so the loyalty selectors are fixed at 1.0× rather than inventing a rule.</p>
+    </div>
+  </details>
+
 </main>
 
 <script>
-const $ = id => document.getElementById(id);
-const fmt = (n, d=0) => (n||0).toLocaleString(undefined, {maximumFractionDigits:d});
-const usd = n => '$' + (n||0).toLocaleString(undefined, {maximumFractionDigits:2});
-const SUPPLY = 1_000_000_000;
+const SLX_TOTAL_SUPPLY = 1_000_000_000;
+// S3's allocation is UNANNOUNCED: Solstice publishes a 7.5%-of-supply campaign
+// base but has not said how much lands on Season 3. This default is that base
+// split across four seasons — a neutral placeholder, never a forecast.
+const S3_AIRDROP_PCT   = 0.01875;
+const FDV_SCENARIOS_M  = [50, 100, 150, 200, 300, 400, 500];
+// SLX SPL mint — used to fetch live spot price from Jupiter.
+const SLX_MINT         = 'SLXdx4BUt2v9uJQNzWqSfzTJ9UKLUDsvxHFMEEdrfgq';
+let LIVE_SLX = null;   // { price, fdvM, change24h, ts }
+let YT_HELPER_DEPOSIT_USD = 0;   // updated by ytHelperApply; used as basis for breakeven FDV
 
-let RAW = null, RANKS = null;
+// Exponent USX/eUSX Sep26 markets mature at 2026-09-16 09:58:20 UTC.
+// YT positions earn flares only until maturity (after that YT is worth $0).
+// Source: api.exponent.finance/api/markets → maturityDateUnixTs.
+const YT_MATURITY_TS = 1789552700;   // Sep26: 2026-09-16 09:58:20 UTC
+// S3's live Exponent markets are the Sep26 pair; Jun26 matured 2026-06-01,
+// before the season opened, so it cannot accrue.
+const YT_QUESTS = new Set(['S3_EXPONENT_YIELD_USX_SEP26', 'S3_EXPONENT_YIELD_EUSX_SEP26']);
 
-async function boot() {
-  try {
-    const r = await fetch('data.json');
-    RAW = await r.json();
-    // Solstice's published total is the honest denominator: our own sum counts
-    // addresses their exclusion list may drop, and we cannot see that list.
-    let total = 0;
-    try {
-      const d = await (await fetch('daily_totals.json')).json();
-      const ss = d.solstice_series || [];
-      if (ss.length) total = ss[ss.length-1].cumulative || 0;
-    } catch (e) {}
-    if (!total) total = (RAW.records||[]).reduce((a,x)=>a+(x.total||0),0);
-    $('total').value = Math.round(total);
-    $('total-hint').textContent = 'Solstice published total — the same denominator the leaderboard headlines.';
-    const cov = RAW.yt_snapshot_coverage;
-    if (cov && Object.keys(cov).length) {
-      const v = Object.values(cov);
-      $('out-day').textContent = Math.max(...v.map(x=>x.season_days)) + ' of 122';
-    }
-    RANKS = new Map((RAW.records||[]).map(x => [x.wallet, x]));
-    const w = new URLSearchParams(location.search).get('w');
-    if (w) { $('wallet').value = w; lookup(); }
-  } catch (e) {
-    $('total-hint').textContent = 'Could not load data.json — enter the total manually.';
+let DAILY = null, DATA = null;
+// Persistent loaded-wallet state — used by renderResults to do YT decay-aware projection.
+let WALLET_CONTEXT = null;   // { current_flares, yt_daily, nonyt_daily, cost_basis_total, cost_basis_breakdown[] }
+
+// ── KMB-aware number parser/formatter (geo-universal: always en-US commas) ──
+function parseAmount(s) {
+  if (s == null) return NaN;
+  // Locale-agnostic: handles US '1,000.5' AND EU '1.000,5'. K/M/B/T suffixes.
+  let raw = String(s).replace(/[\s_  ]/g, '').trim().toLowerCase();
+  if (raw === '' || raw === '-') return NaN;
+  let sign = 1;
+  if (raw[0] === '-') { sign = -1; raw = raw.slice(1); }
+  else if (raw[0] === '+') raw = raw.slice(1);
+  let suffix = '';
+  if (/[kmbt]$/.test(raw)) { suffix = raw.slice(-1); raw = raw.slice(0, -1); }
+  // Disambiguate '.' vs ',' as decimal vs thousands separator.
+  const dots = (raw.match(/\./g) || []).length;
+  const commas = (raw.match(/,/g) || []).length;
+  if (dots > 0 && commas > 0) {
+    // Mixed - the LAST separator is decimal, the other is thousands.
+    if (raw.lastIndexOf('.') > raw.lastIndexOf(',')) raw = raw.replace(/,/g, '');
+    else raw = raw.replace(/\./g, '').replace(',', '.');
+  } else if (dots > 1) {
+    raw = raw.replace(/\./g, '');
+  } else if (commas > 1) {
+    raw = raw.replace(/,/g, '');
+  } else if (commas === 1) {
+    // Single comma, no dot - ambiguous. 3 digits after = thousands, else decimal.
+    const after = raw.slice(raw.indexOf(',') + 1);
+    raw = /^\d{3}$/.test(after) ? raw.replace(',', '') : raw.replace(',', '.');
   }
-  calc();
+  const m = raw.match(/^(\d*\.?\d+)$/);
+  if (!m) return NaN;
+  const n = parseFloat(m[1]);
+  if (!isFinite(n)) return NaN;
+  const mult = { k: 1e3, m: 1e6, b: 1e9, t: 1e12 }[suffix] || 1;
+  return sign * n * mult;
+}
+function formatAmount(n) {
+  if (!isFinite(n) || n == null) return '';
+  return Math.round(n).toLocaleString('en-US');
+}
+function formatFdvM(m) {
+  // FDV displayed in millions, with sensible decimals: 12.5M, 209.9M, 1.20B
+  if (!isFinite(m) || m <= 0) return '0M';
+  if (m >= 1000) return (m/1000).toFixed(2) + 'B';
+  if (m >= 100)  return m.toFixed(1) + 'M';
+  if (m >= 10)   return m.toFixed(1) + 'M';
+  return m.toFixed(2) + 'M';
+}
+function formatKMB(n) {
+  if (!isFinite(n) || n == null) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (abs >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (abs >= 1e3) return (n/1e3).toFixed(2) + 'K';
+  return Math.round(n).toString();
 }
 
-function lookup() {
-  const w = $('wallet').value.trim();
-  const hint = $('wallet-hint');
-  if (!w) { hint.textContent = 'Looks your flares up from the S3 leaderboard.'; return; }
-  const rec = RANKS && RANKS.get(w);
-  if (!rec) {
-    hint.innerHTML = '<span style="color:var(--down)">Not found in the S3 leaderboard.</span> ' +
-                     'Either it holds nothing this season, or its quests are ones we do not index.';
-    $('out-rank').textContent = '—';
+let SYS_TOTAL_USER_EDITED = false;   // sticky once the user types into the system field
+
+function onAmountInput(el) {
+  // Recompute on every keystroke (don't reformat while typing — fights cursor).
+  onAnyInput();
+}
+function onAmountBlur(el) {
+  const n = parseAmount(el.value);
+  el.value = isFinite(n) ? formatAmount(n) : '';
+  onAnyInput();
+}
+function onAmountFocus(el) {
+  // Show raw number while editing — strip commas. KMB suffix is preserved if present.
+  const n = parseAmount(el.value);
+  if (isFinite(n)) el.value = String(Math.round(n));
+}
+
+function onSysTotalInput(el) {
+  SYS_TOTAL_USER_EDITED = true;
+  setSysTip('Manual override · clear & blur to reset to projection');
+  // If user clears it, restore auto-projection on the next render.
+  if (el.value.trim() === '') {
+    SYS_TOTAL_USER_EDITED = false;
+    refreshSysProjection();
+  }
+  onAnyInput();
+}
+
+function onEndDateChange() {
+  // End date drives projections for both system total AND the user's flare
+  // projection (because YT contribution caps at maturity).
+  if (!SYS_TOTAL_USER_EDITED) refreshSysProjection();
+  if (WALLET_CONTEXT) refreshUserProjection();
+  onAnyInput();
+}
+
+function refreshUserProjection() {
+  if (!WALLET_CONTEXT) return;
+  const endIso = document.getElementById('calc-end').value || '2026-12-01';
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+  const todayTs = Math.floor(today.getTime() / 1000);
+  const daysToMaturity = Math.max(0, (YT_MATURITY_TS - todayTs) / 86400);
+  const end = new Date(endIso + 'T00:00:00Z');
+  const days = Math.max(0, Math.round((end - today) / 86400000));
+  const ytDays = Math.min(days, daysToMaturity);
+  const w = WALLET_CONTEXT;
+  const projected = w.current_flares + w.yt_daily * ytDays + w.nonyt_daily * days;
+  setUserTotalRaw(projected);
+  const ytNote = w.yt_daily > 0
+    ? ` · YT emission (${formatAmount(w.yt_daily)}/d) capped at ${daysToMaturity.toFixed(1)}d (maturity 2026-06-01)`
+    : '';
+  setPrefillTip('Pre-filled: ' + formatAmount(w.current_flares) + ' today + projected '
+    + formatAmount(projected - w.current_flares) + ' across ' + days + ' days.' + ytNote
+    + ' Edit to override.');
+}
+
+function onAnyInput() { renderResults(); }
+
+// ── Tooltip ⓘ helpers for the now-hidden hint texts ──────────────────────
+// The three legacy spans (calc-cost-basis, calc-prefill-hint-ico, calc-sys-
+// hint-ico) are kept as data-tip carriers. The visible ⓘ in the wallet
+// caption is a single consolidator span (#wallet-info-ico) populated by
+// syncWalletInfoIco() — called from each setter below.
+function setPrefillTip(text) {
+  const ico = document.getElementById('calc-prefill-hint-ico');
+  if (!ico) return;
+  if (text && text.trim()) {
+    ico.setAttribute('data-tip', text);
+  } else {
+    ico.removeAttribute('data-tip');
+  }
+  syncWalletInfoIco();
+}
+function setSysTip(text) {
+  const ico = document.getElementById('calc-sys-hint-ico');
+  if (!ico) return;
+  if (text && text.trim()) {
+    ico.setAttribute('data-tip', text);
+  } else {
+    ico.removeAttribute('data-tip');
+  }
+  syncWalletInfoIco();
+}
+function syncWalletInfoIco() {
+  const target = document.getElementById('wallet-info-ico');
+  if (!target) return;
+  const cb = document.getElementById('calc-cost-basis');
+  const pf = document.getElementById('calc-prefill-hint-ico');
+  const sy = document.getElementById('calc-sys-hint-ico');
+  // Cost-basis tip lives inside an inner .has-hover-tip span; pull data-tip
+  // and visible-label count from it when present.
+  let cbTip = '', cbLabel = '';
+  if (cb) {
+    const inner = cb.querySelector('.has-hover-tip');
+    if (inner) {
+      cbTip   = inner.getAttribute('data-tip') || '';
+      cbLabel = (inner.textContent || '').replace(/^ⓘ\s*/, '').trim();
+    }
+  }
+  const pfTip = pf ? (pf.getAttribute('data-tip') || '') : '';
+  const syTip = sy ? (sy.getAttribute('data-tip') || '') : '';
+  const parts = [cbTip, pfTip, syTip].filter(t => t && t.trim());
+  if (!parts.length) {
+    target.removeAttribute('data-tip');
+    target.style.display = 'none';
     return;
   }
-  $('flares').value = Math.round(rec.total || 0);
-  $('out-rank').textContent = '#' + fmt(rec.rank_all || 0);
-  hint.innerHTML = 'Loaded from the leaderboard' +
-    (rec.is_protocol_pda ? ' — <span style="color:var(--warn)">flagged as a protocol address</span>.' : '.');
-  calc();
+  target.setAttribute('data-tip', parts.join('\n\n'));
+  target.textContent = cbLabel ? ('ⓘ ' + cbLabel) : 'ⓘ';
+  target.style.display = 'inline';
 }
 
-function allocation() {
-  const v = $('alloc').value;
-  if (v === 'custom') return Math.max(0, parseFloat($('alloc-custom').value) || 0);
-  return parseFloat(v) || 0;
+// ── Loyalty-aware input handling ──────────────────────────────────────────
+// The two flare inputs (calc-total + calc-sys-total) display the BOOSTED
+// totals (raw × loyalty). The raw value is tracked in `dataset.raw` so the
+// inputs can re-render when the user picks a different multiplier.
+function _getMult(which) {
+  const id = which === 'sys' ? 'calc-avg-mult' : 'calc-your-mult';
+  return parseFloat(document.getElementById(id).value) || 1.0;
+}
+function setUserTotalRaw(raw) {
+  const el = document.getElementById('calc-total');
+  el.dataset.raw = String(raw);
+  el.value = formatAmount(raw * _getMult('your'));
+}
+function setSysTotalRaw(raw) {
+  const el = document.getElementById('calc-sys-total');
+  el.dataset.raw = String(raw);
+  el.value = formatAmount(raw * _getMult('sys'));
+}
+function getUserTotalRaw() {
+  const el = document.getElementById('calc-total');
+  return parseFloat(el.dataset.raw || '0') || 0;
+}
+function getSysTotalRaw() {
+  const el = document.getElementById('calc-sys-total');
+  return parseFloat(el.dataset.raw || '0') || 0;
+}
+// User typed directly into the boosted-value input → divide by mult to get raw.
+function onUserTotalEdit(el) {
+  const boosted = parseAmount(el.value);
+  if (!isFinite(boosted)) return;
+  el.dataset.raw = String(boosted / _getMult('your'));
+  renderResults();
+}
+function onSysTotalEdit(el) {
+  const boosted = parseAmount(el.value);
+  if (!isFinite(boosted)) return;
+  el.dataset.raw = String(boosted / _getMult('sys'));
+  renderResults();
+}
+function onUserTotalBlur(el) {
+  const boosted = parseAmount(el.value);
+  if (isFinite(boosted)) {
+    el.dataset.raw = String(boosted / _getMult('your'));
+    el.value = formatAmount(boosted);
+  } else el.value = '';
+  renderResults();
+}
+function onSysTotalBlur(el) {
+  const boosted = parseAmount(el.value);
+  if (isFinite(boosted)) {
+    el.dataset.raw = String(boosted / _getMult('sys'));
+    el.value = formatAmount(boosted);
+  } else el.value = '';
+  renderResults();
+}
+// When loyalty mults change, re-render input values from stored raw so the
+// user sees their boosted total immediately.
+function onLoyaltyChange() {
+  const totalEl = document.getElementById('calc-total');
+  const sysEl   = document.getElementById('calc-sys-total');
+  const rawU = getUserTotalRaw();
+  const rawS = getSysTotalRaw();
+  if (rawU > 0) totalEl.value = formatAmount(rawU * _getMult('your'));
+  if (rawS > 0) sysEl.value   = formatAmount(rawS * _getMult('sys'));
+  renderResults();
 }
 
-function calc() {
-  const flares = Math.max(0, parseFloat($('flares').value) || 0);
-  const total  = Math.max(1, parseFloat($('total').value) || 1);
-  const price  = Math.max(0, parseFloat($('price').value) || 0);
-  const alloc  = allocation();
-  const share  = flares / total;
-  const slx    = share * alloc;
-
-  $('out-slx').textContent = flares > 0 ? fmt(slx, 2) + ' SLX' : '—';
-  $('out-usd').textContent = flares > 0
-    ? `${usd(slx * price)} at ${usd(price)} per SLX` : 'Enter your flares, or paste a wallet above.';
-  $('out-share').textContent = flares > 0 ? (share*100 < 0.001 ? '<0.001%' : (share*100).toFixed(4) + '%') : '—';
-  $('out-per').textContent = slx > 0 ? fmt(flares/slx, 0) : '—';
-
-  const rows = [10e6, 18.75e6, 25e6, 37.5e6, 75e6];
-  if (alloc && !rows.includes(alloc)) rows.push(alloc);
-  rows.sort((a,b)=>a-b);
-  $('scen').tBodies[0].innerHTML = rows.map(a => {
-    const s = share * a;
-    return `<tr class="${a===alloc?'here':''}">
-      <td>${fmt(a)} SLX</td>
-      <td>${(a/SUPPLY*100).toFixed(3)}%</td>
-      <td>${flares>0 ? fmt(s,2) : '—'}</td>
-      <td>${flares>0 ? usd(s*1) : '—'}</td></tr>`;
-  }).join('');
+function computeSystemDailyRates() {
+  // Sum per-quest daily emission across all non-PDA wallets, then split into
+  // YT (caps at maturity) vs everything else (runs full window). Falls back to
+  // the blended daily inflation from daily_totals.json if data.json is missing
+  // per-quest detail.
+  let sysYtDaily = 0, sysNonytDaily = 0, hasPerQuest = false;
+  if (DATA && DATA.records) {
+    for (const r of DATA.records) {
+      if (r.is_protocol_pda) continue;
+      const byQuest = r.daily_emission_by_quest;
+      if (!byQuest) continue;
+      hasPerQuest = true;
+      for (const [q, v] of Object.entries(byQuest)) {
+        if (!v) continue;
+        if (YT_QUESTS.has(q)) sysYtDaily += v;
+        else sysNonytDaily += v;
+      }
+    }
+  }
+  if (!hasPerQuest) {
+    // Fallback: 3-day avg inflation, treated as if all-non-YT (conservative —
+    // means system won't visibly drop at maturity in the projection)
+    if (DAILY && DAILY.days && DAILY.days.length >= 3) {
+      const recent = DAILY.days.slice(-3);
+      sysNonytDaily = recent.reduce((a, d) => a + (d.inflation || 0), 0) / recent.length;
+    } else {
+      sysNonytDaily = 1e9;
+    }
+  }
+  return { sysYtDaily, sysNonytDaily };
 }
 
-$('alloc').addEventListener('change', () => {
-  $('alloc-custom').style.display = $('alloc').value === 'custom' ? 'block' : 'none';
-  calc();
-});
-['flares','total','price','alloc-custom'].forEach(id => $(id).addEventListener('input', calc));
-$('wallet').addEventListener('change', lookup);
-$('wallet').addEventListener('blur', lookup);
-boot();
+function computeSystemTotalAtEnd(daysAhead) {
+  // Prefer Solstice's OFFICIAL published total + their 7-day avg daily delta.
+  // Falls back to our framework's per-quest emission rates if Solstice series
+  // isn't available.
+  if (DAILY && DAILY.solstice_series && DAILY.solstice_series.length >= 2) {
+    const ss = DAILY.solstice_series;
+    const sysNow = ss[ss.length - 1].cumulative || 0;
+    // Average of last 7 days (ex. any anomalous spike — clamp deltas to <2.5B/d
+    // to ignore the snapshot-gap artifact like 2026-05-27)
+    const recent = ss.slice(-8);
+    const deltas = [];
+    for (let i = 1; i < recent.length; i++) {
+      const d = recent[i].inflation;
+      if (d > 0 && d < 2.5e9) deltas.push(d);
+    }
+    const avgDaily = deltas.length ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 1.18e9;
+    return sysNow + avgDaily * daysAhead;
+  }
+  // Fallback: framework-based projection
+  let sysNow = 0;
+  if (DAILY && DAILY.days && DAILY.days.length) {
+    sysNow = DAILY.days[DAILY.days.length - 1].cumulative || 0;
+  } else if (DATA && DATA.records) {
+    sysNow = DATA.records.reduce((a, r) => a + (r.is_protocol_pda ? 0 : (r.total || 0)), 0);
+  }
+  const { sysYtDaily, sysNonytDaily } = computeSystemDailyRates();
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+  const todayTs = Math.floor(today.getTime() / 1000);
+  const daysToMaturity = Math.max(0, (YT_MATURITY_TS - todayTs) / 86400);
+  const ytDays = Math.min(daysAhead, daysToMaturity);
+  return sysNow + sysYtDaily * ytDays + sysNonytDaily * daysAhead;
+}
+
+function refreshSysProjection() {
+  const endIso = document.getElementById('calc-end').value || '2026-12-01';
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+  const end = new Date(endIso + 'T00:00:00Z');
+  const days = Math.max(0, Math.round((end - today) / 86400000));
+  const projected = computeSystemTotalAtEnd(days);
+  setSysTotalRaw(projected);
+  let note;
+  if (DAILY && DAILY.solstice_series && DAILY.solstice_series.length >= 2) {
+    const ss = DAILY.solstice_series;
+    const sysNow = ss[ss.length - 1].cumulative || 0;
+    const recent = ss.slice(-8);
+    const deltas = [];
+    for (let i = 1; i < recent.length; i++) {
+      const d = recent[i].inflation;
+      if (d > 0 && d < 2.5e9) deltas.push(d);
+    }
+    const avgDaily = deltas.length ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 1.18e9;
+    note = `Solstice official: ${formatAmount(sysNow)} now + ${formatAmount(avgDaily)}/d × ${days}d (avg of last ${deltas.length}d)`;
+  } else {
+    const { sysYtDaily, sysNonytDaily } = computeSystemDailyRates();
+    const todayTs = Math.floor(today.getTime() / 1000);
+    const daysToMaturity = Math.max(0, (YT_MATURITY_TS - todayTs) / 86400);
+    note = sysYtDaily > 0
+      ? `Auto-projected (framework): ${formatAmount(sysYtDaily)} YT/d (cap ${daysToMaturity.toFixed(1)}d) + ${formatAmount(sysNonytDaily)} non-YT/d × ${days}d`
+      : 'Auto-projected from current state + last-3d avg inflation';
+  }
+  setSysTip(note);
+}
+
+function renderResults() {
+  // The inputs display BOOSTED values (raw × loyalty). The raw values are
+  // tracked via dataset.raw so we can re-render the input value when the
+  // loyalty multiplier changes. Share math operates on boosted directly.
+  //
+  // Negative-input guardrail: parseAmount accepts a leading minus, so pasting
+  // "-100M" would otherwise yield negative SLX. Clamp both inputs to >=0.
+  const rawUser = Math.max(0, getUserTotalRaw());
+  const rawSys  = Math.max(0, getSysTotalRaw());
+  const yourMult = _getMult('your');
+  const avgMult  = _getMult('sys');
+  const boostedUser = rawUser * yourMult;
+  const boostedSys  = rawSys * avgMult;
+  const endIso = document.getElementById('calc-end').value || '2026-12-01';
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+  const end = new Date(endIso + 'T00:00:00Z');
+  const days = Math.max(0, Math.round((end - today) / 86400000));
+  const share = boostedSys > 0 ? boostedUser / boostedSys : 0;
+  const airdropPct = parseFloat(document.getElementById('calc-airdrop-pct').value) || S3_AIRDROP_PCT;
+  const slx = share * SLX_TOTAL_SUPPLY * airdropPct;
+
+  document.getElementById('calc-days').textContent = days.toLocaleString('en-US');
+  // "You at end" tile shows boosted flares — the actual number Solstice
+  // credits to the user at end of season for share calc.
+  document.getElementById('calc-you').textContent = formatKMB(boostedUser) + ' flares';
+  document.getElementById('calc-share').textContent = (share * 100).toFixed(4) + '%';
+  document.getElementById('calc-slx').textContent = formatAmount(slx) + ' SLX';
+
+  // Keep the Simulate tab's "Applied to SLX calc" readout in sync — both the
+  // mirrored selects (Your mult / Sys mult / SLX bucket) and the derived tiles.
+  if (typeof _syncFromMainTab === 'function') _syncFromMainTab();
+  if (typeof _renderSimulateAppliedToSlx === 'function') {
+    _renderSimulateAppliedToSlx(undefined);
+  }
+
+  // basis = USD at risk: wallet's tracked YT cost basis OR the YT helper's
+  // most recent deposit (whichever is larger). Used for ROI + breakeven FDV.
+  const walletBasis = (WALLET_CONTEXT && WALLET_CONTEXT.cost_basis && WALLET_CONTEXT.cost_basis.total) || 0;
+  const basis = Math.max(walletBasis, YT_HELPER_DEPOSIT_USD);
+
+  const rows = [];
+
+  // Breakeven scenario — surfaced in the hero (#hero-breakeven) directly
+  // under the SLX allocation, not as a row in the FDV table. The FDV needed
+  // so projected USD allocation equals the user's deposit.
+  const heroBe = document.getElementById('hero-breakeven');
+  const cbEl   = document.getElementById('hero-breakeven-basis');
+  if (basis > 0 && slx > 0) {
+    const breakevenPrice = basis / slx;
+    const breakevenFdvM = (breakevenPrice * SLX_TOTAL_SUPPLY) / 1e6;
+    document.getElementById('hero-breakeven-fdv').textContent = '$' + formatFdvM(breakevenFdvM) + ' FDV';
+    if (heroBe) heroBe.hidden = false;
+  } else {
+    if (heroBe) heroBe.hidden = true;
+  }
+  // YT Cost Basis stat (lives in assumptions readout, left side) — always
+  // reflects current basis regardless of slx allocation state.
+  if (cbEl) cbEl.textContent = basis > 0 ? '$' + formatAmount(basis) : '—';
+
+  // Build an ordered scenario list — sort the "NOW" live row inline by FDV
+  // value so it lands between the projected scenarios at its natural spot.
+  const scenarios = FDV_SCENARIOS_M.map(fdvM => ({ fdvM, isLive: false }));
+  if (LIVE_SLX && LIVE_SLX.price > 0 && slx > 0) {
+    const liveFdvM = LIVE_SLX.fdvM || (LIVE_SLX.price * SLX_TOTAL_SUPPLY / 1e6);
+    scenarios.push({ fdvM: liveFdvM, isLive: true, livePrice: LIVE_SLX.price });
+  }
+  scenarios.sort((a, b) => a.fdvM - b.fdvM);
+
+  for (const sc of scenarios) {
+    const price = sc.isLive ? sc.livePrice : (sc.fdvM * 1e6) / SLX_TOTAL_SUPPLY;
+    const usd   = slx * price;
+    let roiCell = '';
+    if (basis > 0) {
+      const mult = usd / basis;
+      const cls  = mult >= 1 ? 'pos' : 'neg';
+      roiCell = `<td class="fdv-roi ${cls}">${mult.toFixed(2)}×</td>`;
+    }
+    const labelHTML = sc.isLive
+      ? `<span class="fdv-now-pill">NOW</span> $${formatFdvM(sc.fdvM)}`
+      : `$${sc.fdvM}M`;
+    const priceHTML = sc.isLive
+      ? `$${price.toFixed(4)}/SLX`
+      : `$${price.toFixed(3)}/SLX`;
+    rows.push(`<tr${sc.isLive ? ' class="fdv-live-row"' : ''}>
+      <td class="fdv-label">${labelHTML}</td>
+      <td class="fdv-price">${priceHTML}</td>
+      <td class="fdv-usd">$${formatAmount(usd)}</td>
+      ${roiCell}
+    </tr>`);
+  }
+  document.getElementById('calc-fdv-rows').innerHTML = rows.join('');
+  // Toggle the no-basis class so the ROI column collapses entirely when
+  // there's no cost basis (the user is in Manual entry mode, or no wallet
+  // is loaded). Hides the ROI <th> + cells via CSS instead of showing "—".
+  const tbl = document.querySelector('.fdv-table');
+  if (tbl) tbl.classList.toggle('no-basis', !(basis > 0));
+  const head = document.getElementById('calc-fdv-roi-head');
+  if (head) head.textContent = basis > 0 ? 'vs YT cost' : '';
+}
+
+// Manual-entry tab: secondary allocation dropdown stays in sync with the
+// primary one in the Load wallet tab. Bidirectional — changing either
+// updates the other and triggers a recompute.
+(function syncAllocationDropdowns() {
+  const a = document.getElementById('calc-airdrop-pct');
+  const b = document.getElementById('calc-airdrop-pct-m');
+  if (!a || !b) return;
+  b.value = a.value;
+  a.addEventListener('change', () => { b.value = a.value; });
+  b.addEventListener('change', () => {
+    a.value = b.value;
+    if (typeof onAnyInput === 'function') onAnyInput();
+  });
+})();
+
+// Global hover-tooltip handler — mirrors the dashboard's pattern.
+(function initHoverTip() {
+  const tip = document.getElementById('hover-tooltip');
+  if (!tip) return;
+
+  function showAt(text, clientX, clientY) {
+    tip.textContent = text;
+    tip.style.left = (clientX + 14) + 'px';
+    tip.style.top  = (clientY + 14) + 'px';
+    tip.classList.add('visible');
+    const r = tip.getBoundingClientRect();
+    if (r.right > window.innerWidth - 8)  tip.style.left = (clientX - r.width - 14) + 'px';
+    if (r.bottom > window.innerHeight - 8) tip.style.top  = (clientY - r.height - 14) + 'px';
+  }
+  function showFromRect(text, rect) {
+    // Mobile: anchor below the tapped element (no cursor available).
+    tip.textContent = text;
+    tip.style.left = Math.max(8, rect.left) + 'px';
+    tip.style.top  = (rect.bottom + 6) + 'px';
+    tip.classList.add('visible');
+    const r = tip.getBoundingClientRect();
+    if (r.right > window.innerWidth - 8) tip.style.left = (window.innerWidth - r.width - 8) + 'px';
+  }
+  // Desktop: follow cursor on hover.
+  document.addEventListener('mousemove', (e) => {
+    const t = e.target.closest('.has-hover-tip');
+    if (!t) { tip.classList.remove('visible'); return; }
+    const text = t.getAttribute('data-tip');
+    if (text) showAt(text, e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+  // Mobile: tap on an ⓘ to show; tap anywhere else dismisses.
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('.has-hover-tip');
+    if (!t) { tip.classList.remove('visible'); return; }
+    const text = t.getAttribute('data-tip');
+    if (!text) return;
+    e.preventDefault();
+    e.stopPropagation();
+    showFromRect(text, t.getBoundingClientRect());
+  }, true);
+})();
+
+function extractCostBasis(evidence) {
+  // Returns { total: $, breakdown: [{label, usd}, …] } of USD AT RISK.
+  //
+  // Only YT positions are included — they decay linearly to $0 at maturity
+  // (2026-06-01), so the "cost basis" is real money that goes to zero unless
+  // you sell. Every other partner (LP, Kamino, Loopscale, CLMM, kVault) is
+  // capital-preserved: stablecoin positions you can withdraw at any time.
+  // Including those in a "cost basis" line would misrepresent risk.
+  //
+  // Per-position cost-basis chips in the wallet drawer still show "USD net
+  // deposited" for those partners (useful as a yield-extracted signal), they
+  // just don't aggregate into the calculator's ROI math.
+  const breakdown = [];
+  const ev = evidence || {};
+  const yt = ev.S3_EXPONENT_YT || {};
+  for (const mb of (yt.by_market || [])) {
+    const cb = mb.cost_basis;
+    if (!cb || cb.usd_basis === undefined) continue;
+    const isUsx = mb.market && mb.market.startsWith('Bxbi');
+    breakdown.push({ label: 'YT ' + (isUsx ? 'USX-Jun26' : 'eUSX-Jun26'), usd: cb.usd_basis || 0 });
+  }
+  const total = breakdown.reduce((s, b) => s + b.usd, 0);
+  return { total, breakdown };
+}
+
+async function calcLoadWallet() {
+  const addr = (document.getElementById('calc-wallet').value || '').trim();
+  const err = document.getElementById('calc-error');
+  const src = document.getElementById('calc-source');
+  const cbInfo = document.getElementById('calc-cost-basis');
+  err.style.display = 'none';
+  if (!addr) {
+    err.textContent = 'Paste a wallet address first.';
+    err.style.display = 'block';
+    return;
+  }
+  // Loading a real wallet clears any prior YT helper scenario.
+  YT_HELPER_DEPOSIT_USD = 0;
+  src.textContent = 'loading…';
+  try {
+    const r = await fetch('wallets/' + addr + '.json');
+    if (!r.ok) throw new Error('not found');
+    const p = await r.json();
+    const current = p.total_flares || 0;
+    const dailyByQuest = p.daily_emission_by_quest || {};
+    // Split daily emission: YT (stops at maturity) vs everything else (continues)
+    let ytDaily = 0, nonytDaily = 0;
+    for (const [q, v] of Object.entries(dailyByQuest)) {
+      if (!v) continue;
+      if (YT_QUESTS.has(q)) ytDaily += v;
+      else nonytDaily += v;
+    }
+    // Cost basis from evidence
+    const costBasis = extractCostBasis(p.evidence || {});
+
+    WALLET_CONTEXT = {
+      current_flares: current,
+      yt_daily: ytDaily,
+      nonyt_daily: nonytDaily,
+      cost_basis: costBasis,
+    };
+
+    // Compute end-date total using decay-aware math
+    const endIso = document.getElementById('calc-end').value || '2026-12-01';
+    const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+    const todayTs = Math.floor(today.getTime() / 1000);
+    const daysToMaturity = Math.max(0, (YT_MATURITY_TS - todayTs) / 86400);
+    const end = new Date(endIso + 'T00:00:00Z');
+    const days = Math.max(0, Math.round((end - today) / 86400000));
+    const ytDays = Math.min(days, daysToMaturity);
+    const projected = current + ytDaily * ytDays + nonytDaily * days;
+
+    setUserTotalRaw(projected);
+    // Pre-fill hint mentions YT decay if applicable
+    const ytNote = ytDaily > 0
+      ? ` · YT emission (${formatAmount(ytDaily)}/d) capped at ${daysToMaturity.toFixed(1)}d (maturity 2026-06-01)`
+      : '';
+    setPrefillTip('Pre-filled: ' + formatAmount(current) + ' today + projected '
+      + formatAmount(projected - current) + ' across ' + days + ' days.' + ytNote
+      + ' Edit to override.');
+    src.innerHTML = 'Loaded <span>' + addr.slice(0, 6) + '…' + addr.slice(-6) + '</span>'
+      + ' · <a href="index.html#w/' + encodeURIComponent(addr) + '" style="color:var(--accent-300); text-decoration:underline dotted;">View on dashboard ↗</a>';
+
+    // Show cost basis chip — YT only (other partners are capital-preserved
+    // and their USD-deposited isn't "at risk"). The visible ⓘ is rendered
+    // by #wallet-info-ico; we still stash the data-tip + label inside
+    // #calc-cost-basis so the consolidator can read it.
+    if (cbInfo) {
+      if (costBasis.total > 0) {
+        const tip = (costBasis.breakdown
+          .sort((a,b) => b.usd - a.usd)
+          .map(b => `${b.label}: ${'$' + Math.round(b.usd).toLocaleString('en-US')}`)
+          .join('\n')
+          + '\n\nOnly YT positions count toward cost basis — YT decays to $0 at maturity. LP/Kamino/Loopscale/CLMM positions are capital-preserved (stablecoins withdrawable any time).'
+        ).replace(/"/g, '&quot;');
+        cbInfo.innerHTML = `<span class="has-hover-tip" data-tip="${tip}">ⓘ ${costBasis.breakdown.length} YT market${costBasis.breakdown.length===1?'':'s'}</span>`;
+      } else {
+        cbInfo.innerHTML = '';
+      }
+    }
+    syncWalletInfoIco();
+    renderResults();
+  } catch (e) {
+    err.textContent = 'No data found for ' + addr + '. Check the address — it must be a wallet that appears in our dashboard.';
+    err.style.display = 'block';
+    src.textContent = '';
+  }
+}
+
+// ── YT projection helper ────────────────────────────────────────────────
+// Pulls live YT prices + multipliers from Exponent's public markets API
+// and projects flare emission for a hypothetical deposit. Targets Sep26
+// markets only (Jun26 is days from maturity).
+const YT_HELPER_MIN_DAYS_TO_MATURITY = 30;   // skip about-to-mature markets
+// 2026-08-01 00:00 UTC = 1767225600 (Jan 1) + 212 days = 1785542400. Flares
+// stop accruing at this boundary regardless of market maturity. Earlier
+// version of this file had 1785024000 (Jul 26) which clipped the projection
+// 6 days early.
+const S3_END_TS = 1796083200;   // S3 ends 2026-12-01 00:00 UTC
+// Solstice +50% boost on Sep26 rate markets ended 2026-05-29 00:00 UTC.
+// (Originally announced 2026-06-02 but multi-wallet flare reproduction
+// confirmed the actual credit cutover was 2026-05-29.)
+// After this, YT/LP multipliers revert to base (boost/1.5). The Exponent API
+// currently returns boost values; we split projections at this boundary.
+const BOOST_END_TS = 1780012800;
+const BOOST_RATIO  = 1.5;
+
+// Split a YT projection into boost-period flares and base-period flares.
+// Returns { totalFlares, daysBoost, daysBase, boostMult, baseMult }.
+function projectYtFlares(yt, apiMult, effectiveEnd) {
+  const now = Math.floor(Date.now() / 1000);
+  const totalDays = Math.max(0, (effectiveEnd - now) / 86400);
+  if (now >= BOOST_END_TS) {
+    // Boost already over — apiMult IS the base; all days at base rate.
+    return { totalFlares: yt * apiMult * totalDays,
+             daysBoost: 0, daysBase: totalDays,
+             boostMult: apiMult, baseMult: apiMult };
+  }
+  const daysBoost = Math.min(totalDays, (BOOST_END_TS - now) / 86400);
+  const daysBase  = Math.max(0, totalDays - daysBoost);
+  const baseMult  = apiMult / BOOST_RATIO;
+  const totalFlares = yt * (apiMult * daysBoost + baseMult * daysBase);
+  return { totalFlares, daysBoost, daysBase, boostMult: apiMult, baseMult };
+}
+let YT_MARKETS = [];
+
+async function loadYtMarkets() {
+  try {
+    const r = await fetch('https://api.exponent.finance/api/markets');
+    if (!r.ok) throw new Error('exponent api fail');
+    const all = await r.json();
+    const now = Math.floor(Date.now() / 1000);
+    YT_MARKETS = all
+      .filter(m => m.platform === 'solstice')
+      .filter(m => (m.maturityDateUnixTs || 0) - now > YT_HELPER_MIN_DAYS_TO_MATURITY * 86400)
+      .filter(m => m.pointsBoost && m.pointsBoost.yt_multiplier)
+      .map(m => ({
+        key: m.vaultAddress,
+        ticker: (m.underlyingAsset || {}).ticker || '?',
+        maturityTs: m.maturityDateUnixTs,
+        ytPrice: m.ytPriceInAsset,           // YT price in underlying asset
+        ytMultiplier: m.pointsBoost.yt_multiplier,
+        impliedApy: m.impliedApy,
+      }))
+      .sort((a, b) => b.ytMultiplier - a.ytMultiplier);  // best mult first
+    const sel = document.getElementById('yt-market');
+    if (sel) {
+      const nowTs = Math.floor(Date.now() / 1000);
+      const boostActive = nowTs < BOOST_END_TS;
+      sel.innerHTML = YT_MARKETS.length
+        ? YT_MARKETS.map(m => {
+            const d = new Date(m.maturityTs * 1000);
+            const dd  = String(d.getUTCDate()).padStart(2, '0');
+            const mmm = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getUTCMonth()];
+            const yy  = String(d.getUTCFullYear()).slice(-2);
+            const sym = `YT-${m.ticker}${dd}${mmm}${yy}`;
+            const multStr = boostActive
+              ? `${m.ytMultiplier}× → ${(m.ytMultiplier / BOOST_RATIO)}× (May 29)`
+              : `${m.ytMultiplier}× boost`;
+            return `<option value="${m.key}">${sym}  ·  ${multStr}  ·  ${(m.impliedApy*100).toFixed(2)}% APY</option>`;
+          }).join('')
+        : '<option value="">No active markets</option>';
+    }
+    onYtInput();
+  } catch (e) {
+    console.warn('YT markets fetch failed:', e);
+    const sel = document.getElementById('yt-market');
+    if (sel) sel.innerHTML = '<option value="">Exponent API offline</option>';
+  }
+}
+
+let _LAST_SIM_TOTAL = 0;
+
+function _syncFromSimTab(srcEl, targetId) {
+  // The Simulate tab's selects (sim-your-mult, sim-avg-mult, sim-airdrop-pct)
+  // are wired to mirror their Load-wallet-tab twins. Changing one updates the
+  // other and re-runs all dependent recalcs (loyalty rebases the boosted input
+  // displays; airdrop-pct just triggers the share recompute).
+  const target = document.getElementById(targetId);
+  if (!target || target.value === srcEl.value) return;
+  target.value = srcEl.value;
+  if (targetId === 'calc-your-mult' || targetId === 'calc-avg-mult') {
+    onLoyaltyChange();
+  } else {
+    onAnyInput();
+  }
+}
+
+function _syncFromMainTab() {
+  // Reverse direction: when the user changes a select in the Load wallet tab,
+  // mirror the new value into the Simulate-tab counterpart. Called from
+  // renderResults() so it stays in sync with every render.
+  const pairs = [
+    ['calc-your-mult',   'sim-your-mult'],
+    ['calc-avg-mult',    'sim-avg-mult'],
+    ['calc-airdrop-pct', 'sim-airdrop-pct'],
+  ];
+  for (const [mainId, simId] of pairs) {
+    const main = document.getElementById(mainId);
+    const sim  = document.getElementById(simId);
+    if (main && sim && main.value !== sim.value) sim.value = main.value;
+  }
+}
+
+function _renderSimulateAppliedToSlx(simulatedTotalFlares) {
+  // Recomputes the Sys total / Your share / Projected SLX readout tiles.
+  // The Your/Sys mult and SLX bucket are now first-class selects in the
+  // Simulate tab (synced to the main calc), so they don't need separate display.
+  // Passing undefined re-uses the last simulated total (so global control
+  // changes flow into this readout without re-typing the deposit).
+  if (simulatedTotalFlares === undefined) {
+    simulatedTotalFlares = _LAST_SIM_TOTAL;
+  } else {
+    _LAST_SIM_TOTAL = simulatedTotalFlares;
+  }
+  const out = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  const yourMult = _getMult('your');
+  const avgMult  = _getMult('sys');
+  const rawSys   = Math.max(0, getSysTotalRaw());
+  const airdropPct = parseFloat(document.getElementById('calc-airdrop-pct').value) || S3_AIRDROP_PCT;
+  out('yt-out-systotal', rawSys > 0 ? formatKMB(rawSys * avgMult) : '—');
+  if (simulatedTotalFlares > 0 && rawSys > 0) {
+    const share = (simulatedTotalFlares * yourMult) / (rawSys * avgMult);
+    const slx = share * SLX_TOTAL_SUPPLY * airdropPct;
+    out('yt-out-share', (share * 100).toFixed(4) + '%');
+    out('yt-out-slx', formatAmount(slx) + ' SLX');
+  } else {
+    out('yt-out-share', '—');
+    out('yt-out-slx', '—');
+  }
+}
+
+function onYtInput() {
+  const dep = parseAmount(document.getElementById('yt-deposit').value);
+  const key = document.getElementById('yt-market').value;
+  const market = YT_MARKETS.find(m => m.key === key);
+  const out = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  if (!isFinite(dep) || dep <= 0 || !market) {
+    out('yt-out-yt', '—'); out('yt-out-daily', '—'); out('yt-out-duration', '—'); out('yt-out-total', '—');
+    _renderSimulateAppliedToSlx(0);
+    return;
+  }
+  const yt = dep / market.ytPrice;
+  const effectiveEnd = Math.min(market.maturityTs, S3_END_TS);
+  const proj = projectYtFlares(yt, market.ytMultiplier, effectiveEnd);
+  const fmt = n => n >= 1e9 ? (n/1e9).toFixed(2)+'B' : n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(2)+'K' : Math.round(n).toLocaleString();
+  out('yt-out-yt', fmt(yt) + ' YT');
+  // Daily-rate cell: show split when there's both a boost and a base period.
+  // Duration is rendered in its own tile.
+  const daysTotal = proj.daysBoost + proj.daysBase;
+  if (proj.daysBoost > 0 && proj.daysBase > 0) {
+    const dailyBoost = yt * proj.boostMult;
+    const dailyBase  = yt * proj.baseMult;
+    out('yt-out-daily',
+      `${fmt(dailyBoost)}/Day <span style="color:var(--ink-500); font-size:10px;">boost</span>
+       <br><span style="color:var(--ink-400);">${fmt(dailyBase)}/Day</span> <span style="color:var(--ink-500); font-size:10px;">base (post-May 29)</span>`);
+  } else {
+    const daily = yt * (proj.daysBoost > 0 ? proj.boostMult : proj.baseMult);
+    out('yt-out-daily', fmt(daily) + '/Day');
+  }
+  out('yt-out-duration', daysTotal.toFixed(0) + ' Days');
+  out('yt-out-total', fmt(proj.totalFlares));
+  _renderSimulateAppliedToSlx(proj.totalFlares);
+}
+
+function ytHelperApply() {
+  const dep = parseAmount(document.getElementById('yt-deposit').value);
+  const key = document.getElementById('yt-market').value;
+  const market = YT_MARKETS.find(m => m.key === key);
+  if (!isFinite(dep) || dep <= 0 || !market) return;
+  const yt = dep / market.ytPrice;
+  const effectiveEnd = Math.min(market.maturityTs, S3_END_TS);
+  const proj = projectYtFlares(yt, market.ytMultiplier, effectiveEnd);
+  const totalFlares = proj.totalFlares;
+  const daysToAccrue = proj.daysBoost + proj.daysBase;
+  // Push projection into main calculator + set end date to effectiveEnd
+  setUserTotalRaw(totalFlares);
+  const endIso = new Date(effectiveEnd * 1000).toISOString().slice(0, 10);
+  document.getElementById('calc-end').value = endIso;
+  // Clear any wallet context (this is a hypothetical scenario)
+  WALLET_CONTEXT = null;
+  // Record the deposit's USD-equivalent as cost basis for the breakeven row.
+  // USX ≈ $1, eUSX ≈ $1.03 (close enough for breakeven framing).
+  const usdPerUnit = (market.ticker === 'eUSX') ? 1.03 : 1.0;
+  YT_HELPER_DEPOSIT_USD = dep * usdPerUnit;
+  const multNote = proj.daysBoost > 0 && proj.daysBase > 0
+    ? `${proj.boostMult}× × ${proj.daysBoost.toFixed(0)}d boost, then ${proj.baseMult}× × ${proj.daysBase.toFixed(0)}d (post-May 29)`
+    : `${proj.daysBoost > 0 ? proj.boostMult : proj.baseMult}× × ${daysToAccrue.toFixed(0)}d`;
+  setPrefillTip('Pre-filled from YT helper: $' + formatAmount(dep) + ' → '
+    + formatAmount(yt) + ' YT, ' + multNote + '. Edit to override.');
+  // Refresh main calc result
+  if (typeof renderResults === 'function') renderResults();
+  // Smooth-scroll user back to the main result grid so they see SLX projection
+  const target = document.querySelector('.result-grid');
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function loadLiveSlxPrice() {
+  // Jupiter price v3 — public, no auth. Falls back silently if Jupiter is
+  // offline or SLX isn't listed; the "live" FDV row just won't render.
+  try {
+    const r = await fetch('https://api.jup.ag/price/v3?ids=' + SLX_MINT);
+    if (!r.ok) return;
+    const data = await r.json();
+    const entry = data[SLX_MINT];
+    if (!entry || !isFinite(entry.usdPrice) || entry.usdPrice <= 0) return;
+    LIVE_SLX = {
+      price: entry.usdPrice,
+      fdvM: (entry.usdPrice * SLX_TOTAL_SUPPLY) / 1e6,
+      change24h: entry.priceChange24h,
+      ts: Date.now(),
+    };
+    renderResults();
+  } catch (e) { /* offline — no-op */ }
+}
+
+async function init() {
+  try {
+    const [dr, mr] = await Promise.all([
+      fetch('daily_totals.json').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('data.json').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    DAILY = dr;
+    DATA = mr;
+  } catch (e) {}
+  // Seed the system-total input with the auto-projection. User can override after.
+  refreshSysProjection();
+  // Kick off Exponent YT markets + Jupiter SLX price (non-blocking).
+  loadYtMarkets();
+  loadLiveSlxPrice();
+  // Read ?w=<addr> from URL to auto-load (deep-linkable).
+  const params = new URLSearchParams(location.search);
+  const w = params.get('w');
+  if (w) {
+    document.getElementById('calc-wallet').value = w;
+    await calcLoadWallet();
+  } else {
+    renderResults();
+  }
+}
+
+init();
+
+// Tabbed panel — swap Load wallet / Simulate new deposit / Manual entry
+(function panelTabs() {
+  const tabs = document.querySelectorAll('.tabbed-panel__tab');
+  const panes = document.querySelectorAll('.tabbed-panel__pane');
+  if (!tabs.length) return;
+  tabs.forEach(t => t.addEventListener('click', () => {
+    const which = t.getAttribute('data-pane');
+    tabs.forEach(o => o.classList.toggle('is-active', o === t));
+    panes.forEach(p => { p.hidden = p.getAttribute('data-pane') !== which; });
+  }));
+})();
+
+// Manual-entry tab mirror — keep the duplicate readout in sync with the
+// primary readout in the Load wallet pane. One MutationObserver per source
+// node; we observe characterData + subtree so any textContent rewrite
+// propagates without touching the existing producer JS.
+(function manualMirror() {
+  const pairs = [
+    ['calc-you',             'm-you'],
+    ['calc-share',           'm-share'],
+    ['calc-days',            'm-days'],
+  ];
+  pairs.forEach(([srcId, dstId]) => {
+    const src = document.getElementById(srcId);
+    const dst = document.getElementById(dstId);
+    if (!src || !dst) return;
+    const copy = () => { dst.textContent = src.textContent; };
+    copy();
+    new MutationObserver(copy).observe(src, { childList: true, characterData: true, subtree: true });
+  });
+})();
 </script>
+
 </body>
 </html>
