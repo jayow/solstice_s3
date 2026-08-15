@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solstice S3 SLX Calculator · Hanyon Analytics</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<style>
+:root {
+  --bg: #0a0a0b; --bg-elev: #131316;
+  --hairline: rgba(255,255,255,.08); --hairline-strong: rgba(255,255,255,.12);
+  --text: #f5f5f7; --text-2: #a1a1a6; --text-3: #6e6e73;
+  --accent: rgb(252, 211, 77); --accent-dim: rgba(252,211,77,.12);
+  --up: #34d399; --down: #f87171; --warn: rgb(251, 191, 36);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased; }
+main { max-width: 1000px; margin: 0 auto; padding: 28px 24px 80px; }
+a { color: inherit; }
+.mono, .tabular { font-variant-numeric: tabular-nums; }
+
+header { display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 40px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img { height: 30px; filter: invert(1); display: block; }
+.sep { color: var(--text-3); }
+.right-links { display: flex; align-items: center; gap: 10px; font-size: 12px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+.right-links a { text-decoration: none; }
+.right-links a:hover { color: var(--text); }
+.right-links a.featured { color: var(--accent); }
+
+.eyebrow { font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-3); display: block; margin-bottom: 10px; }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 6px; }
+.lede { color: var(--text-2); font-size: 13px; margin: 0 0 28px; max-width: 70ch; }
+
+.notice { background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.32);
+  border-radius: 12px; padding: 16px 18px; margin-bottom: 32px; font-size: 13px;
+  line-height: 1.6; color: var(--text); }
+.notice strong { color: var(--warn); }
+
+.grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 860px) { .grid { grid-template-columns: 380px 1fr; align-items: start; } }
+
+.card { background: var(--bg-elev); border: 1px solid var(--hairline);
+  border-radius: 14px; padding: 22px; }
+.card h2 { font-size: 13px; font-weight: 600; margin: 0 0 18px;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); }
+
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 7px; }
+.field .hint { font-size: 11px; color: var(--text-3); margin-top: 5px; line-height: 1.5; }
+input[type=text], input[type=number], select {
+  width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--hairline-strong);
+  color: var(--text); border-radius: 9px; padding: 10px 12px; font-size: 14px;
+  font-variant-numeric: tabular-nums; font-family: inherit; }
+input:focus, select:focus { outline: none; border-color: rgba(252,211,77,.5); }
+select { appearance: none; -webkit-appearance: none; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-3) 50%),
+                    linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 52%, calc(100% - 11px) 52%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+
+.hero { border: 1px solid var(--hairline); border-radius: 14px; padding: 26px;
+  background: linear-gradient(180deg, rgba(252,211,77,.05), transparent 60%); margin-bottom: 20px; }
+.hero .v { font-size: 40px; font-weight: 650; letter-spacing: -.03em;
+  color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.hero .sub { color: var(--text-2); font-size: 13px; margin-top: 8px; }
+
+.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+  gap: 18px 22px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--hairline); }
+.readout .k { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
+.readout .val { font-size: 17px; font-weight: 600; margin-top: 5px; font-variant-numeric: tabular-nums; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+th, td { padding: 9px 10px; text-align: right; font-variant-numeric: tabular-nums; }
+th { font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-3); font-weight: 500; border-bottom: 1px solid var(--hairline); }
+td { border-bottom: 1px solid rgba(255,255,255,.04); }
+th:first-child, td:first-child { text-align: left; }
+tr.here td { background: var(--accent-dim); }
+tr.here td:first-child { font-weight: 600; }
+
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--hairline);
+  color: var(--text-3); font-size: 11.5px; line-height: 1.65; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">
+      <a href="https://solstice.finance" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;">
+        <img src="logos/solstice-text.svg" alt="Solstice" />
+      </a>
+      <span class="sep">·</span>
+      <span style="font-size:12px;color:var(--text-2);">S3 SLX Calculator by
+        <a href="https://hanyon.app" target="_blank" rel="noopener noreferrer"
+           style="color:var(--text);text-decoration:underline dotted;text-underline-offset:3px;">Hanyon Analytics</a></span>
+    </div>
+    <div class="right-links">
+      <a href="index.html">← S3 Leaderboard</a>
+      <span class="sep">·</span>
+      <a href="https://app.solstice.finance/?ref=z763qy4JcE" class="featured" target="_blank" rel="noopener noreferrer">Join Solstice ↗</a>
+    </div>
+  </header>
+
+  <span class="eyebrow">Season 3</span>
+  <h1>What might my flares be worth?</h1>
+  <p class="lede">Your flares divided by the season total, times whatever SLX ends up being allocated to Season 3.
+     The first two numbers we measure on-chain. The third nobody knows yet — so it is an input, not an assumption.</p>
+
+  <div class="notice">
+    <strong>The S3 allocation has not been announced.</strong>
+    Solstice publishes a campaign-wide SLX base of <span class="mono" id="api-base">7.5%</span> of a
+    <span class="mono">1,000,000,000</span> SLX supply, but has not said how much of that lands on Season 3
+    specifically. Every figure below therefore moves linearly with the allocation you choose — treat it as
+    "what if", not a forecast. S2's own allocation shifted more than once before it settled.
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Inputs</h2>
+
+      <div class="field">
+        <label for="wallet">Wallet (optional)</label>
+        <input type="text" id="wallet" placeholder="Paste an address to auto-fill" autocomplete="off" />
+        <div class="hint" id="wallet-hint">Looks your flares up from the S3 leaderboard.</div>
+      </div>
+
+      <div class="field">
+        <label for="flares">Your S3 flares</label>
+        <input type="number" id="flares" value="0" min="0" step="any" />
+        <div class="hint">Edit freely to model a bigger position.</div>
+      </div>
+
+      <div class="field">
+        <label for="total">Season total flares</label>
+        <input type="number" id="total" value="0" min="1" step="any" />
+        <div class="hint" id="total-hint">Solstice's published total.</div>
+      </div>
+
+      <div class="field">
+        <label for="alloc">SLX allocated to Season 3</label>
+        <select id="alloc">
+          <option value="10000000">10,000,000 SLX (1.0% of supply)</option>
+          <option value="18750000" selected>18,750,000 SLX (1.875% — campaign base ÷ 4 seasons)</option>
+          <option value="25000000">25,000,000 SLX (2.5%)</option>
+          <option value="37500000">37,500,000 SLX (3.75% — half the campaign base)</option>
+          <option value="75000000">75,000,000 SLX (7.5% — the entire campaign base)</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <input type="number" id="alloc-custom" placeholder="SLX" style="margin-top:8px;display:none" min="0" step="any" />
+        <div class="hint"><strong style="color:var(--warn)">Unconfirmed.</strong> The default splits the 7.5%
+          campaign base evenly across four seasons — a guess, chosen only because it is neutral.</div>
+      </div>
+
+      <div class="field" style="margin-bottom:0">
+        <label for="price">SLX price (USD)</label>
+        <input type="number" id="price" value="1.00" min="0" step="any" />
+        <div class="hint">No market price exists pre-TGE. $1.00 is a placeholder for arithmetic.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="hero">
+        <span class="eyebrow">Your estimated allocation</span>
+        <div class="v" id="out-slx">—</div>
+        <div class="sub" id="out-usd">—</div>
+        <div class="readout">
+          <div><div class="k">Your share</div><div class="val" id="out-share">—</div></div>
+          <div><div class="k">Flares per SLX</div><div class="val" id="out-per">—</div></div>
+          <div><div class="k">Season day</div><div class="val" id="out-day">—</div></div>
+          <div><div class="k">Your rank</div><div class="val" id="out-rank">—</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Across allocation scenarios</h2>
+        <table id="scen">
+          <thead><tr><th>S3 allocation</th><th>% of supply</th><th>Your SLX</th><th>At $1.00</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="hint" style="margin:14px 2px 0;color:var(--text-3);font-size:11px;">
+          Linear in the allocation: double it and your SLX doubles. The share is what the dashboard measures;
+          the allocation is what Solstice has yet to announce.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <strong style="color:var(--text-2)">How the share is computed.</strong>
+    Your flares come from this project's independent on-chain indexing — every quest walked from Solana state
+    and multiplied by Solstice's published multiplier. The season total is Solstice's own published figure, so
+    the ratio compares our measurement against their denominator and will not match their per-wallet display
+    exactly. Exponent YT is credited only for days observed on-chain, so YT-heavy wallets read as a floor.
+    Referral flares are not on-chain and are never included.
+    <br /><br />
+    Not affiliated with Solstice Finance. Nothing here is financial advice, and no part of it is a prediction
+    of what SLX will be worth.
+  </footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = (n, d=0) => (n||0).toLocaleString(undefined, {maximumFractionDigits:d});
+const usd = n => '$' + (n||0).toLocaleString(undefined, {maximumFractionDigits:2});
+const SUPPLY = 1_000_000_000;
+
+let RAW = null, RANKS = null;
+
+async function boot() {
+  try {
+    const r = await fetch('data.json');
+    RAW = await r.json();
+    // Solstice's published total is the honest denominator: our own sum counts
+    // addresses their exclusion list may drop, and we cannot see that list.
+    let total = 0;
+    try {
+      const d = await (await fetch('daily_totals.json')).json();
+      const ss = d.solstice_series || [];
+      if (ss.length) total = ss[ss.length-1].cumulative || 0;
+    } catch (e) {}
+    if (!total) total = (RAW.records||[]).reduce((a,x)=>a+(x.total||0),0);
+    $('total').value = Math.round(total);
+    $('total-hint').textContent = 'Solstice published total — the same denominator the leaderboard headlines.';
+    const cov = RAW.yt_snapshot_coverage;
+    if (cov && Object.keys(cov).length) {
+      const v = Object.values(cov);
+      $('out-day').textContent = Math.max(...v.map(x=>x.season_days)) + ' of 122';
+    }
+    RANKS = new Map((RAW.records||[]).map(x => [x.wallet, x]));
+    const w = new URLSearchParams(location.search).get('w');
+    if (w) { $('wallet').value = w; lookup(); }
+  } catch (e) {
+    $('total-hint').textContent = 'Could not load data.json — enter the total manually.';
+  }
+  calc();
+}
+
+function lookup() {
+  const w = $('wallet').value.trim();
+  const hint = $('wallet-hint');
+  if (!w) { hint.textContent = 'Looks your flares up from the S3 leaderboard.'; return; }
+  const rec = RANKS && RANKS.get(w);
+  if (!rec) {
+    hint.innerHTML = '<span style="color:var(--down)">Not found in the S3 leaderboard.</span> ' +
+                     'Either it holds nothing this season, or its quests are ones we do not index.';
+    $('out-rank').textContent = '—';
+    return;
+  }
+  $('flares').value = Math.round(rec.total || 0);
+  $('out-rank').textContent = '#' + fmt(rec.rank_all || 0);
+  hint.innerHTML = 'Loaded from the leaderboard' +
+    (rec.is_protocol_pda ? ' — <span style="color:var(--warn)">flagged as a protocol address</span>.' : '.');
+  calc();
+}
+
+function allocation() {
+  const v = $('alloc').value;
+  if (v === 'custom') return Math.max(0, parseFloat($('alloc-custom').value) || 0);
+  return parseFloat(v) || 0;
+}
+
+function calc() {
+  const flares = Math.max(0, parseFloat($('flares').value) || 0);
+  const total  = Math.max(1, parseFloat($('total').value) || 1);
+  const price  = Math.max(0, parseFloat($('price').value) || 0);
+  const alloc  = allocation();
+  const share  = flares / total;
+  const slx    = share * alloc;
+
+  $('out-slx').textContent = flares > 0 ? fmt(slx, 2) + ' SLX' : '—';
+  $('out-usd').textContent = flares > 0
+    ? `${usd(slx * price)} at ${usd(price)} per SLX` : 'Enter your flares, or paste a wallet above.';
+  $('out-share').textContent = flares > 0 ? (share*100 < 0.001 ? '<0.001%' : (share*100).toFixed(4) + '%') : '—';
+  $('out-per').textContent = slx > 0 ? fmt(flares/slx, 0) : '—';
+
+  const rows = [10e6, 18.75e6, 25e6, 37.5e6, 75e6];
+  if (alloc && !rows.includes(alloc)) rows.push(alloc);
+  rows.sort((a,b)=>a-b);
+  $('scen').tBodies[0].innerHTML = rows.map(a => {
+    const s = share * a;
+    return `<tr class="${a===alloc?'here':''}">
+      <td>${fmt(a)} SLX</td>
+      <td>${(a/SUPPLY*100).toFixed(3)}%</td>
+      <td>${flares>0 ? fmt(s,2) : '—'}</td>
+      <td>${flares>0 ? usd(s*1) : '—'}</td></tr>`;
+  }).join('');
+}
+
+$('alloc').addEventListener('change', () => {
+  $('alloc-custom').style.display = $('alloc').value === 'custom' ? 'block' : 'none';
+  calc();
+});
+['flares','total','price','alloc-custom'].forEach(id => $(id).addEventListener('input', calc));
+$('wallet').addEventListener('change', lookup);
+$('wallet').addEventListener('blur', lookup);
+boot();
+</script>
+</body>
+</html>

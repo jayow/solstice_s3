@@ -305,6 +305,8 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
       </span>
     </div>
     <div class="right-links">
+      <a href="s3-calculator.html">SLX Calculator</a>
+      <span class="sep">·</span>
       <a href="https://s2.solstice.hanyon.app/" target="_blank" rel="noopener noreferrer">Season 2 ↗</a>
       <span class="sep">·</span>
       <a href="https://airdrop.solstice.hanyon.app/" target="_blank" rel="noopener noreferrer">Season 1 ↗</a>
@@ -869,6 +871,8 @@ async function openDrawer(addr) {
   document.getElementById('dr-content').innerHTML = '<div style="color:var(--ink-400); padding:20px 0;">Loading…</div>';
   document.getElementById('dr-total').innerHTML = '';
   if (!location.hash.endsWith(addr)) history.replaceState(null,'','#w/'+addr);
+  const cl = document.getElementById('dr-calc-link');
+  if (cl) cl.href = 's3-calculator.html?w=' + encodeURIComponent(addr);
   let p;
   try {
     const r = await fetch('wallets/' + addr + '.json');
@@ -1437,17 +1441,6 @@ function renderStats() {
       <div class="v tabular">${newOnly.toLocaleString()}</div>
       <div class="sub">${all.length ? (newOnly/all.length*100).toFixed(1) : '0'}% of participants</div>
     </div>
-    ${(() => {
-      const pend = all.filter(r => (r.projected_total || 0) > 0);
-      if (!pend.length) return '';
-      const sum = pend.reduce((a, r) => a + (r.projected_total || 0), 0);
-      return `
-    <div class="stat" title="Wallets whose tier qualification clock is RUNNING (an in-season transaction started it). Carry-in wallets — holding since before Aug 1 with no S3 transaction — are counted separately and NOT projected: under the S2-verified rule their clock hasn't started. Projections are estimates: the floor can drop, and a sub-$100 midnight resets the clock.">
-      <div class="label">Projected tier payouts</div>
-      <div class="v tabular accent">~${fmt(sum)}</div>
-      <div class="sub">across ${pend.length.toLocaleString()} wallets · first wave ~Aug 31</div>
-    </div>`;
-    })()}
   `;
 }
 
