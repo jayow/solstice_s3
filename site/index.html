@@ -69,10 +69,10 @@ header { display: flex; align-items: center; justify-content: space-between; mar
    Stats are bare text (no card enclosure) so they sit lightly next to the donut. */
 .stats-row { display: grid; grid-template-columns: 1fr; gap: 24px;
              margin-bottom: 48px; align-items: center; }
-@media (min-width: 980px) { .stats-row { grid-template-columns: 1fr 340px; } }
+/* Donut removed — the stats row is a single full-width band now. */
 
-.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 40px;
-         margin-bottom: 0; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+         gap: 22px 24px; margin-bottom: 0; }
 .stat { padding: 0; background: transparent; }
 .stat .v { font-size: 26px; margin-top: 6px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .stat .v.accent { color: var(--accent-300); }
@@ -159,7 +159,7 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
 
   /* Stats: single column stack, smaller numbers */
   .stats-row { gap: 16px; margin-bottom: 28px; }
-  .stats { grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+  .stats { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px 20px; }
   .stat .v { font-size: 19px; }
   .stat .sub { font-size: 10px; }
 
@@ -315,7 +315,6 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
 
   <div class="stats-row">
     <section class="stats" id="stats"></section>
-    <section id="partner-stats" style="margin: 0;"></section>
   </div>
   <div id="hover-tooltip"></div>
 
@@ -1192,7 +1191,8 @@ function renderChart() {
   const sel = document.getElementById('chart-mode');
   if (sel && sel.value !== CHART_MODE) sel.value = CHART_MODE;
   if (CHART_MODE === 'solstice') {
-    const ss = (DAILY.solstice_series || []).filter(d => d.cumulative > 0);
+    let ss = (DAILY.solstice_series || []).filter(d => d.cumulative > 0);
+    while (ss.length > 1 && !(ss[0].inflation > 0)) ss = ss.slice(1);
     if (!ss.length) { CHART_MODE = 'cumulative'; if (sel) sel.value = CHART_MODE; return renderChart(); }
     renderSolsticeChart(ss); return;
   }
@@ -1401,7 +1401,9 @@ function renderStats() {
     ? `Sum of current per-quest TVL across ${all.length.toLocaleString()} visible wallets.`
     : `Solstice's officially published total flares (from their /api/flares/analytics). Real-user subset: ${fmt(realUsersFlares)}.`;
   const s1 = all.filter(r => r.is_s1).length;
-  const newS2 = all.length - s1;
+  const s2r = all.filter(r => r.in_s2).length;
+  const all3 = all.filter(r => r.is_s1 && r.in_s2).length;
+  const newOnly = all.filter(r => !r.is_s1 && !r.in_s2).length;
   const subSuffix = HIDE_PDAS ? '(excl. protocol PDAs)' : '(incl. protocol PDAs)';
 
   document.getElementById("stats").innerHTML = `
@@ -1415,15 +1417,25 @@ function renderStats() {
       <div class="v tabular accent">${headlineValue}</div>
       <div class="sub">${headlineSub}</div>
     </div>
-    <div class="stat" title="Earners that registered for the Season 1 airdrop.">
+    <div class="stat" title="S3 participants that also registered for the Season 1 airdrop.">
       <div class="label">S1 retained</div>
       <div class="v tabular">${s1.toLocaleString()}</div>
       <div class="sub">${all.length ? (s1/all.length*100).toFixed(1) : '0'}% of participants</div>
     </div>
-    <div class="stat" title="Earners that didn't register for S1 but are accruing S3 flares.">
+    <div class="stat" title="S3 participants that also earned flares in Season 2.">
+      <div class="label">S2 retained</div>
+      <div class="v tabular">${s2r.toLocaleString()}</div>
+      <div class="sub">${all.length ? (s2r/all.length*100).toFixed(1) : '0'}% of participants</div>
+    </div>
+    <div class="stat" title="Wallets present in ALL THREE seasons — registered for S1, earned in S2, and earning in S3. The core retained cohort.">
+      <div class="label">All 3 seasons</div>
+      <div class="v tabular accent">${all3.toLocaleString()}</div>
+      <div class="sub">${all.length ? (all3/all.length*100).toFixed(1) : '0'}% of participants</div>
+    </div>
+    <div class="stat" title="Brand new: no S1 registration and no S2 flares.">
       <div class="label">New in S3</div>
-      <div class="v tabular">${newS2.toLocaleString()}</div>
-      <div class="sub">${all.length ? (newS2/all.length*100).toFixed(1) : '0'}% of participants</div>
+      <div class="v tabular">${newOnly.toLocaleString()}</div>
+      <div class="sub">${all.length ? (newOnly/all.length*100).toFixed(1) : '0'}% of participants</div>
     </div>
     ${(() => {
       const pend = all.filter(r => (r.projected_total || 0) > 0);
@@ -1437,7 +1449,6 @@ function renderStats() {
     </div>`;
     })()}
   `;
-  renderPartnerStats();
 }
 
 const PARTNER_LABELS = {
@@ -1454,78 +1465,6 @@ const PARTNER_COLORS = {
   strcusx:     '#7c5cff',  // purple
   exponent:    '#22d3ee',  // cyan
 };
-
-function _partnerRows(allRecords) {
-  const partners = RAW.partners || ['solstice','yield_vault','strcusx','exponent'];
-  const totals = Object.fromEntries(partners.map(p => [p, 0]));
-  let grand = 0;
-  for (const r of allRecords) for (const p of partners) { const v = r[p] || 0; totals[p] += v; grand += v; }
-  let lastDayByPartner = {};
-  if (DAILY && DAILY.days && DAILY.days.length) {
-    const last = DAILY.days[DAILY.days.length - 1];
-    for (const p of partners) lastDayByPartner[p] = (last.by_partner && last.by_partner[p] && last.by_partner[p].inflation) || 0;
-  }
-  const rows = partners.map(p => ({p, tot: totals[p], rate: lastDayByPartner[p] || 0}))
-                      .filter(r => r.tot > 0)
-                      .sort((a, b) => b.tot - a.tot);
-  return {rows, grand};
-}
-
-function renderPartnerStats() {
-  const all = HIDE_PDAS ? RAW.records.filter(r => !r.is_protocol_pda) : RAW.records;
-  const {rows, grand} = _partnerRows(all);
-  if (!rows.length) {
-    document.getElementById('partner-stats').innerHTML = ''; return;
-  }
-  const size = 200, stroke = 28, radius = (size - stroke) / 2;
-  const cx = size / 2, cy = size / 2;
-  // Render arcs as explicit SVG paths instead of <circle> + stroke-dasharray.
-  // The dasharray trick rendered as a "bowtie" on some data shapes due to
-  // browser-specific dash-pattern wrapping; explicit arc commands always
-  // render cleanly. We rotate the start point to 12 o'clock (angle 0 = top).
-  const polar = (a) => [cx + radius * Math.sin(a), cy - radius * Math.cos(a)];
-  let acc = 0;   // cumulative angle (radians)
-  const TAU = 2 * Math.PI;
-  const arcs = rows.map(r => {
-    const frac = r.tot / grand;
-    const a0 = acc;
-    const a1 = acc + frac * TAU;
-    acc = a1;
-    const tip = `${PARTNER_LABELS[r.p] || r.p}\n${fmt(r.tot)} flares\n${(frac*100).toFixed(1)}% · +${fmt(r.rate)}/day`;
-    // Single-arc edge case: a full-circle path with M/A/A back to start.
-    if (frac >= 0.9999) {
-      // Draw two half-arcs since SVG `arc` can't represent a 360° single arc.
-      const [x0, y0] = polar(0);
-      const [x1, y1] = polar(Math.PI);
-      return `<path d="M ${x0} ${y0} A ${radius} ${radius} 0 0 1 ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x0} ${y0}"
-                    fill="none" stroke="${PARTNER_COLORS[r.p] || '#888'}" stroke-width="${stroke}"
-                    class="has-hover-tip" data-tip="${tip.replace(/"/g,'&quot;')}"></path>`;
-    }
-    const [x0, y0] = polar(a0);
-    const [x1, y1] = polar(a1);
-    const largeArc = (a1 - a0) > Math.PI ? 1 : 0;
-    return `<path d="M ${x0} ${y0} A ${radius} ${radius} 0 ${largeArc} 1 ${x1} ${y1}"
-                  fill="none" stroke="${PARTNER_COLORS[r.p] || '#888'}" stroke-width="${stroke}"
-                  class="has-hover-tip" data-tip="${tip.replace(/"/g,'&quot;')}"></path>`;
-  }).join('');
-  // Compact legend — color chip + name only, no numbers (tooltip on donut handles those).
-  const legend = rows.map(r => `
-      <span style="display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-300);">
-        <span style="width:10px; height:10px; border-radius:2px; background:${PARTNER_COLORS[r.p] || '#888'}; display:inline-block;"></span>${PARTNER_LABELS[r.p] || r.p}
-      </span>`).join('');
-  document.getElementById('partner-stats').innerHTML = `
-    <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
-      <div style="position:relative; width:${size}px; height:${size}px;">
-        <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${arcs}</svg>
-        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;">
-          <div style="font-size:10px; color:var(--ink-500); text-transform:uppercase; letter-spacing:0.14em;">By family</div>
-          <div class="tabular accent" style="font-size:18px; font-weight:600; margin-top:4px;">${fmt(grand)}</div>
-        </div>
-      </div>
-      <div style="display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center;">${legend}</div>
-    </div>
-  `;
-}
 
 // === Custom fast tooltip ===
 // `title=""` attribute has a ~700ms delay before the browser shows it. We
