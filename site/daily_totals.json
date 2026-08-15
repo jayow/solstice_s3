@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-15T09:57:56.560133+00:00",
+  "generated_at_utc": "2026-08-15T12:05:40.545669+00:00",
   "s2_start_ts": 1785542400,
   "season": "S3",
   "last_complete_midnight_ts": 1786752000,
@@ -10,331 +10,331 @@
     "yield_vault"
   ],
   "partner_totals": {
-    "exponent": 55112553667.0,
-    "solstice": 37248649763.0,
-    "strcusx": 11732068.0,
-    "yield_vault": 1976490076.0
+    "exponent": 54825508675.0,
+    "solstice": 37007152569.0,
+    "strcusx": 11530108.0,
+    "yield_vault": 1964325391.0
   },
   "days": [
     {
       "date": "2026-08-01",
-      "cumulative": 7867894231.0,
-      "inflation": 7867894231.0,
+      "cumulative": 7831102491.0,
+      "inflation": 7831102491.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 5067348865.0,
-          "inflation": 5067348865.0
+          "cumulative": 5048353443.0,
+          "inflation": 5048353443.0
         },
         "solstice": {
-          "cumulative": 2658691101.0,
-          "inflation": 2658691101.0
+          "cumulative": 2641767288.0,
+          "inflation": 2641767288.0
         },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
         },
         "yield_vault": {
-          "cumulative": 141854264.0,
-          "inflation": 141854264.0
+          "cumulative": 140981761.0,
+          "inflation": 140981761.0
         }
       }
     },
     {
       "date": "2026-08-02",
-      "cumulative": 14144845706.0,
-      "inflation": 6276951475.0,
+      "cumulative": 14071161171.0,
+      "inflation": 6240058680.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 8543622192.0,
-          "inflation": 3476273327.0
+          "cumulative": 8505598207.0,
+          "inflation": 3457244764.0
         },
         "solstice": {
-          "cumulative": 5317480798.0,
-          "inflation": 2658789697.0
+          "cumulative": 5283565303.0,
+          "inflation": 2641798015.0
         },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
         },
         "yield_vault": {
-          "cumulative": 283742716.0,
-          "inflation": 141888451.0
+          "cumulative": 281997662.0,
+          "inflation": 141015901.0
         }
       }
     },
     {
       "date": "2026-08-03",
-      "cumulative": 20807786950.0,
-      "inflation": 6662941244.0,
+      "cumulative": 20697019610.0,
+      "inflation": 6625858438.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 12405634848.0,
-          "inflation": 3862012655.0
+          "cumulative": 12348409883.0,
+          "inflation": 3842811676.0
         },
         "solstice": {
-          "cumulative": 7976406588.0,
-          "inflation": 2658925790.0
+          "cumulative": 7925481884.0,
+          "inflation": 2641916581.0
         },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
         },
         "yield_vault": {
-          "cumulative": 425745515.0,
-          "inflation": 142002799.0
+          "cumulative": 423127843.0,
+          "inflation": 141130180.0
         }
       }
     },
     {
       "date": "2026-08-04",
-      "cumulative": 27162039569.0,
-      "inflation": 6354252619.0,
+      "cumulative": 27014189267.0,
+      "inflation": 6317169658.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 15959237972.0,
-          "inflation": 3553603125.0
+          "cumulative": 15882821001.0,
+          "inflation": 3534411117.0
         },
         "solstice": {
-          "cumulative": 10635109000.0,
-          "inflation": 2658702412.0
+          "cumulative": 10567166220.0,
+          "inflation": 2641684336.0
         },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
         },
         "yield_vault": {
-          "cumulative": 567692598.0,
-          "inflation": 141947083.0
+          "cumulative": 564202047.0,
+          "inflation": 141074204.0
         }
       }
     },
     {
       "date": "2026-08-05",
-      "cumulative": 33425617175.0,
-      "inflation": 6263577606.0,
+      "cumulative": 33240664249.0,
+      "inflation": 6226474982.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 19420943572.0,
-          "inflation": 3461705599.0
+          "cumulative": 19325335872.0,
+          "inflation": 3442514871.0
         },
         "solstice": {
-          "cumulative": 13295586185.0,
-          "inflation": 2660477186.0
+          "cumulative": 13210601053.0,
+          "inflation": 2643434833.0
         },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
         },
         "yield_vault": {
-          "cumulative": 709087418.0,
-          "inflation": 141394821.0
+          "cumulative": 704727325.0,
+          "inflation": 140525278.0
         }
       }
     },
     {
       "date": "2026-08-06",
-      "cumulative": 39638715947.0,
-      "inflation": 6213098772.0,
+      "cumulative": 39416575741.0,
+      "inflation": 6175911491.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 22832225086.0,
-          "inflation": 3411281515.0
+          "cumulative": 22717368869.0,
+          "inflation": 3392032997.0
         },
         "solstice": {
-          "cumulative": 15956455364.0,
-          "inflation": 2660869178.0
+          "cumulative": 15854398364.0,
+          "inflation": 2643797312.0
         },
         "strcusx": {
-          "cumulative": 1099.0,
-          "inflation": 1099.0
+          "cumulative": 1088.0,
+          "inflation": 1088.0
         },
         "yield_vault": {
-          "cumulative": 850034399.0,
-          "inflation": 140946980.0
+          "cumulative": 844807419.0,
+          "inflation": 140080094.0
         }
       }
     },
     {
       "date": "2026-08-07",
-      "cumulative": 45850568641.0,
-      "inflation": 6211852694.0,
+      "cumulative": 45590998783.0,
+      "inflation": 6174423042.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 26240757369.0,
-          "inflation": 3408532283.0
+          "cumulative": 26106575864.0,
+          "inflation": 3389206995.0
         },
         "solstice": {
-          "cumulative": 18618714142.0,
-          "inflation": 2662258779.0
+          "cumulative": 18499421463.0,
+          "inflation": 2645023099.0
         },
         "strcusx": {
-          "cumulative": 202390.0,
-          "inflation": 201291.0
+          "cumulative": 200152.0,
+          "inflation": 199064.0
         },
         "yield_vault": {
-          "cumulative": 990894740.0,
-          "inflation": 140860341.0
+          "cumulative": 984801304.0,
+          "inflation": 139993885.0
         }
       }
     },
     {
       "date": "2026-08-08",
-      "cumulative": 52194659779.0,
-      "inflation": 6344091138.0,
+      "cumulative": 51896049993.0,
+      "inflation": 6305051210.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 29781683866.0,
-          "inflation": 3540926496.0
+          "cumulative": 29626670761.0,
+          "inflation": 3520094897.0
         },
         "solstice": {
-          "cumulative": 21280651518.0,
-          "inflation": 2661937376.0
+          "cumulative": 21144021551.0,
+          "inflation": 2644600088.0
         },
         "strcusx": {
-          "cumulative": 620235.0,
-          "inflation": 417845.0
+          "cumulative": 613356.0,
+          "inflation": 413203.0
         },
         "yield_vault": {
-          "cumulative": 1131704161.0,
-          "inflation": 140809421.0
+          "cumulative": 1124744325.0,
+          "inflation": 139943021.0
         }
       }
     },
     {
       "date": "2026-08-09",
-      "cumulative": 58333561736.0,
-      "inflation": 6138901957.0,
+      "cumulative": 57995576412.0,
+      "inflation": 6099526420.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 33117439413.0,
-          "inflation": 3335755547.0
+          "cumulative": 32941269936.0,
+          "inflation": 3314599175.0
         },
         "solstice": {
-          "cumulative": 23942637506.0,
-          "inflation": 2661985988.0
+          "cumulative": 23788659509.0,
+          "inflation": 2644637958.0
         },
         "strcusx": {
-          "cumulative": 1038079.0,
-          "inflation": 417845.0
+          "cumulative": 1026559.0,
+          "inflation": 413203.0
         },
         "yield_vault": {
-          "cumulative": 1272446738.0,
-          "inflation": 140742577.0
+          "cumulative": 1264620408.0,
+          "inflation": 139876083.0
         }
       }
     },
     {
       "date": "2026-08-10",
-      "cumulative": 69718016504.0,
-      "inflation": 11384454767.0,
+      "cumulative": 69340540382.0,
+      "inflation": 11344963970.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 41698533251.0,
-          "inflation": 8581093838.0
+          "cumulative": 41501128936.0,
+          "inflation": 8559859000.0
         },
         "solstice": {
-          "cumulative": 26604249908.0,
-          "inflation": 2661612402.0
+          "cumulative": 26432896559.0,
+          "inflation": 2644237049.0
         },
         "strcusx": {
-          "cumulative": 1945406.0,
-          "inflation": 907326.0
+          "cumulative": 1920205.0,
+          "inflation": 893646.0
         },
         "yield_vault": {
-          "cumulative": 1413287940.0,
-          "inflation": 140841201.0
+          "cumulative": 1404594682.0,
+          "inflation": 139974274.0
         }
       }
     },
     {
       "date": "2026-08-11",
-      "cumulative": 75847477355.0,
-      "inflation": 6129460851.0,
+      "cumulative": 75430189078.0,
+      "inflation": 6089648696.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 45023277525.0,
-          "inflation": 3324744274.0
+          "cumulative": 44804361577.0,
+          "inflation": 3303232641.0
         },
         "solstice": {
-          "cumulative": 29266003992.0,
-          "inflation": 2661754084.0
+          "cumulative": 29077255336.0,
+          "inflation": 2644358777.0
         },
         "strcusx": {
-          "cumulative": 4111791.0,
-          "inflation": 2166385.0
+          "cumulative": 4048875.0,
+          "inflation": 2128670.0
         },
         "yield_vault": {
-          "cumulative": 1554084047.0,
-          "inflation": 140796108.0
+          "cumulative": 1544523289.0,
+          "inflation": 139928607.0
         }
       }
     },
     {
       "date": "2026-08-12",
-      "cumulative": 82009314810.0,
-      "inflation": 6161837455.0,
+      "cumulative": 81551251343.0,
+      "inflation": 6121062266.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 48380888417.0,
-          "inflation": 3357610892.0
+          "cumulative": 48139549512.0,
+          "inflation": 3335187935.0
         },
         "solstice": {
-          "cumulative": 31926888453.0,
-          "inflation": 2660884461.0
+          "cumulative": 31720701888.0,
+          "inflation": 2643446552.0
         },
         "strcusx": {
-          "cumulative": 6651883.0,
-          "inflation": 2540092.0
+          "cumulative": 6542620.0,
+          "inflation": 2493744.0
         },
         "yield_vault": {
-          "cumulative": 1694886057.0,
-          "inflation": 140802010.0
+          "cumulative": 1684457323.0,
+          "inflation": 139934034.0
         }
       }
     },
     {
       "date": "2026-08-13",
-      "cumulative": 88179377802.0,
-      "inflation": 6170062992.0,
+      "cumulative": 87679994411.0,
+      "inflation": 6128743067.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 51746725441.0,
-          "inflation": 3365837024.0
+          "cumulative": 51482533462.0,
+          "inflation": 3342983950.0
         },
         "solstice": {
-          "cumulative": 34587772318.0,
-          "inflation": 2660883866.0
+          "cumulative": 34364033228.0,
+          "inflation": 2643331339.0
         },
         "strcusx": {
-          "cumulative": 9191975.0,
-          "inflation": 2540092.0
+          "cumulative": 9036364.0,
+          "inflation": 2493744.0
         },
         "yield_vault": {
-          "cumulative": 1835688066.0,
-          "inflation": 140802010.0
+          "cumulative": 1824391357.0,
+          "inflation": 139934034.0
         }
       }
     },
     {
       "date": "2026-08-14",
-      "cumulative": 94349425573.0,
-      "inflation": 6170047772.0,
+      "cumulative": 93808516743.0,
+      "inflation": 6128522333.0,
       "by_partner": {
         "exponent": {
-          "cumulative": 55112553667.0,
-          "inflation": 3365828225.0
+          "cumulative": 54825508675.0,
+          "inflation": 3342975213.0
         },
         "solstice": {
-          "cumulative": 37248649763.0,
-          "inflation": 2660877445.0
+          "cumulative": 37007152569.0,
+          "inflation": 2643119342.0
         },
         "strcusx": {
-          "cumulative": 11732068.0,
-          "inflation": 2540092.0
+          "cumulative": 11530108.0,
+          "inflation": 2493744.0
         },
         "yield_vault": {
-          "cumulative": 1976490076.0,
-          "inflation": 140802010.0
+          "cumulative": 1964325391.0,
+          "inflation": 139934034.0
         }
       }
     }
@@ -382,11 +382,11 @@
     }
   ],
   "sources": {
-    "reconstructed_through_last_midnight": 94349425573.0,
+    "reconstructed_through_last_midnight": 93808516743.0,
     "wallet_quests_grand_total_now": 72588089536.0,
-    "wallet_quests_grand_total_non_pda": 42601670643.0,
-    "pda_excluded_count": 1944,
-    "pda_excluded_flares": 29986418892.0,
+    "wallet_quests_grand_total_non_pda": 42577254402.0,
+    "pda_excluded_count": 2107,
+    "pda_excluded_flares": 30010835134.0,
     "note": "Bars represent flares as of each day's 00:00 UTC. Today is in-progress and is omitted until tomorrow's 00:00 UTC. Protocol-PDA wallets are excluded to match Solstice's leaderboard."
   }
 }

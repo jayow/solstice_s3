@@ -1412,12 +1412,23 @@ function renderResults() {
   }, true);
 })();
 
+// Wrapper-market PDA -> label. Was previously inferred from a 'Bxbi' prefix
+// test, which only knew S2's Jun26 vintage: both S3 Sep26 markets fell through
+// to the else-branch and were labelled "eUSX-Jun26" — a market that matured
+// before Season 3 even opened.
+const YT_MARKET_LABEL = {
+  '2pZuAPFRJLbT57qJ1ebs8B2ExWwHywyaHUC6Y515BaMm': 'YT USX-Sep26',
+  'EsVGeJ99ADQGwGWLiBEg93xBtmuMjyC4P5zG9bpVMJWf': 'YT eUSX-Sep26',
+  'BxbiZpzj32nrVGecFy8VQ1HohaW7ryhas1k9aiETDWdm': 'YT USX-Jun26',
+  'rBbzpGk3PTX8mvQg95VWJ24EDgvxyDJYrEo9jtauvjP':  'YT eUSX-Jun26',
+};
+
 function extractCostBasis(evidence) {
   // Returns { total: $, breakdown: [{label, usd}, …] } of USD AT RISK.
   //
   // Only YT positions are included — they decay linearly to $0 at maturity
-  // (2026-06-01), so the "cost basis" is real money that goes to zero unless
-  // you sell. Every other partner (LP, Kamino, Loopscale, CLMM, kVault) is
+  // (2026-09-16 for S3's Sep26 markets), so the "cost basis" is real money that
+  // goes to zero unless you sell. Every other partner (LP, CLMM, lending) is
   // capital-preserved: stablecoin positions you can withdraw at any time.
   // Including those in a "cost basis" line would misrepresent risk.
   //
@@ -1430,8 +1441,8 @@ function extractCostBasis(evidence) {
   for (const mb of (yt.by_market || [])) {
     const cb = mb.cost_basis;
     if (!cb || cb.usd_basis === undefined) continue;
-    const isUsx = mb.market && mb.market.startsWith('Bxbi');
-    breakdown.push({ label: 'YT ' + (isUsx ? 'USX-Jun26' : 'eUSX-Jun26'), usd: cb.usd_basis || 0 });
+    breakdown.push({ label: YT_MARKET_LABEL[mb.market] || 'YT (unknown market)',
+                     usd: cb.usd_basis || 0 });
   }
   const total = breakdown.reduce((s, b) => s + b.usd, 0);
   return { total, breakdown };
