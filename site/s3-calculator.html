@@ -681,15 +681,22 @@ footer { text-align: center; color: var(--text-3); font-size: 11px; margin-top: 
                    onchange="onEndDateChange()" />
           </div>
           <div class="assumptions__row">
-            <label class="assumptions__label" for="calc-your-mult">Loyalty mult</label>
-            <select id="calc-your-mult" class="assumptions__control" onchange="onLoyaltyChange()" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
-              <option value="1.0" selected>1.0× — n/a in S3</option>
+            <label class="assumptions__label" for="calc-your-mult">Your loyalty</label>
+            <select id="calc-your-mult" class="assumptions__control" onchange="onLoyaltyChange()" title="S3 loyalty is scored against your SEASON 2 position: keep >=100% of your S2 TVL for +40% (1.4x), >=50% and <100% for +30% (1.3x), and the multiplier is removed entirely if TVL drops below 50%. Settled once at the end of Season 3. New participants get the newcomer boost instead.">
+              <option value="1.4" selected>1.4× — kept ≥100% of S2 TVL</option>
+              <option value="1.3">1.3× — kept ≥50% & &lt;100%</option>
+              <option value="1.2">1.2× — newcomer boost</option>
+              <option value="1.0">1.0× — none (TVL below 50%)</option>
             </select>
           </div>
           <div class="assumptions__row">
-            <label class="assumptions__label" for="calc-avg-mult">Avg system</label>
-            <select id="calc-avg-mult" class="assumptions__control" onchange="onLoyaltyChange()" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
-              <option value="1.0" selected>1.0× — n/a in S3</option>
+            <label class="assumptions__label" for="calc-avg-mult">Avg system loyalty</label>
+            <select id="calc-avg-mult" class="assumptions__control" onchange="onLoyaltyChange()" title="System-wide average multiplier, used to inflate the DENOMINATOR so your share stays honest. ~1.35x reflects the mix of loyalty-boosted S2 carry-overs and newcomer-boosted entrants observed last season.">
+              <option value="1.4">1.4×</option>
+              <option value="1.35" selected>1.35× — observed S2 blend</option>
+              <option value="1.3">1.3×</option>
+              <option value="1.2">1.2×</option>
+              <option value="1.0">1.0×</option>
             </select>
           </div>
           <div class="assumptions__row">
@@ -731,15 +738,22 @@ footer { text-align: center; color: var(--text-3); font-size: 11px; margin-top: 
              selects in the Load wallet tab via _syncFromSimTab() / _syncFromMainTab(). -->
         <div class="assumptions__rows">
           <div class="assumptions__row">
-            <label class="assumptions__label" for="sim-your-mult">Loyalty mult</label>
-            <select id="sim-your-mult" class="assumptions__control" onchange="_syncFromSimTab(this, 'calc-your-mult')" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
-              <option value="1.0" selected>1.0× — n/a in S3</option>
+            <label class="assumptions__label" for="sim-your-mult">Your loyalty</label>
+            <select id="sim-your-mult" class="assumptions__control" onchange="onLoyaltyChange()" title="S3 loyalty is scored against your SEASON 2 position: keep >=100% of your S2 TVL for +40% (1.4x), >=50% and <100% for +30% (1.3x), and the multiplier is removed entirely if TVL drops below 50%. Settled once at the end of Season 3. New participants get the newcomer boost instead.">
+              <option value="1.4" selected>1.4× — kept ≥100% of S2 TVL</option>
+              <option value="1.3">1.3× — kept ≥50% & &lt;100%</option>
+              <option value="1.2">1.2× — newcomer boost</option>
+              <option value="1.0">1.0× — none (TVL below 50%)</option>
             </select>
           </div>
           <div class="assumptions__row">
-            <label class="assumptions__label" for="sim-avg-mult">Avg system</label>
-            <select id="sim-avg-mult" class="assumptions__control" onchange="_syncFromSimTab(this, 'calc-avg-mult')" disabled title="Solstice applied a loyalty multiplier at the end of S2, scored against an S1 TWA baseline. No equivalent rule has been published for S3, so this page fixes it at 1.0x rather than inventing one.">
-              <option value="1.0" selected>1.0× — n/a in S3</option>
+            <label class="assumptions__label" for="sim-avg-mult">Avg system loyalty</label>
+            <select id="sim-avg-mult" class="assumptions__control" onchange="onLoyaltyChange()" title="System-wide average multiplier, used to inflate the DENOMINATOR so your share stays honest. ~1.35x reflects the mix of loyalty-boosted S2 carry-overs and newcomer-boosted entrants observed last season.">
+              <option value="1.4">1.4×</option>
+              <option value="1.35" selected>1.35× — observed S2 blend</option>
+              <option value="1.3">1.3×</option>
+              <option value="1.2">1.2×</option>
+              <option value="1.0">1.0×</option>
             </select>
           </div>
           <div class="assumptions__row">
@@ -880,7 +894,7 @@ footer { text-align: center; color: var(--text-3); font-size: 11px; margin-top: 
         The "SLX bucket" picker is a WHAT-IF. Solstice publishes a campaign-wide base of 7.5% of supply but has NOT announced how much goes to Season 3; the 1.875% default is that base divided by four seasons. Every number scales linearly with whatever you pick.
       </p>
       <p style="margin: 0;">
-        <strong style="color: var(--text);">No loyalty multiplier is modelled.</strong> Solstice applied one at the end of S2 against an S1 TWA baseline; nothing equivalent has been published for S3, so the loyalty selectors are fixed at 1.0× rather than inventing a rule.</p>
+        <strong style="color: var(--text);">S3 loyalty boost (up to 1.4×):</strong> Solstice scores Season 3 loyalty against your <em>Season 2</em> position — hold ≥100% of your S2 TVL through the season for +40% (1.4×), ≥50% and &lt;100% for +30% (1.3×), and the multiplier is removed outright if TVL falls below 50%. A minimum eligible TVL applies and it settles once, at the end of Season 3. Newcomers get their own boost instead. The "Avg system loyalty" default of 1.35× inflates the denominator to match, reflecting the blend of boosted carry-overs and newcomers seen last season — set both to 1.0× to see raw unboosted flares.</p>
     </div>
   </details>
 
