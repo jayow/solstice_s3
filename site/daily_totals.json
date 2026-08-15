@@ -1,133 +1,340 @@
 {
-  "generated_at_utc": "2026-08-12T02:54:03.798007+00:00",
+  "generated_at_utc": "2026-08-15T09:15:42.036561+00:00",
   "s2_start_ts": 1785542400,
   "season": "S3",
-  "last_complete_midnight_ts": 1786492800,
+  "last_complete_midnight_ts": 1786752000,
   "partners": [
-    "strcusx"
+    "exponent",
+    "solstice",
+    "strcusx",
+    "yield_vault"
   ],
   "partner_totals": {
-    "strcusx": 4141546.0
+    "exponent": 55208359620.0,
+    "solstice": 37324624347.0,
+    "strcusx": 11800525.0,
+    "yield_vault": 1980510541.0
   },
   "days": [
     {
       "date": "2026-08-01",
-      "cumulative": 0.0,
-      "inflation": 0.0,
+      "cumulative": 7879938325.0,
+      "inflation": 7879938325.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 5073685281.0,
+          "inflation": 5073685281.0
+        },
+        "solstice": {
+          "cumulative": 2664110459.0,
+          "inflation": 2664110459.0
+        },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
+        },
+        "yield_vault": {
+          "cumulative": 142142585.0,
+          "inflation": 142142585.0
         }
       }
     },
     {
       "date": "2026-08-02",
-      "cumulative": 0.0,
-      "inflation": 0.0,
+      "cumulative": 14168944732.0,
+      "inflation": 6289006406.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 8556305685.0,
+          "inflation": 3482620404.0
+        },
+        "solstice": {
+          "cumulative": 5328319633.0,
+          "inflation": 2664209174.0
+        },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
+        },
+        "yield_vault": {
+          "cumulative": 284319414.0,
+          "inflation": 142176829.0
         }
       }
     },
     {
       "date": "2026-08-03",
-      "cumulative": 0.0,
-      "inflation": 0.0,
+      "cumulative": 20843998762.0,
+      "inflation": 6675054031.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 12424722588.0,
+          "inflation": 3868416903.0
+        },
+        "solstice": {
+          "cumulative": 7992665562.0,
+          "inflation": 2664345929.0
+        },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
+        },
+        "yield_vault": {
+          "cumulative": 426610613.0,
+          "inflation": 142291199.0
         }
       }
     },
     {
       "date": "2026-08-04",
-      "cumulative": 0.0,
-      "inflation": 0.0,
+      "cumulative": 27210361020.0,
+      "inflation": 6366362258.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 15984726955.0,
+          "inflation": 3560004367.0
+        },
+        "solstice": {
+          "cumulative": 10656787873.0,
+          "inflation": 2664122311.0
+        },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
+        },
+        "yield_vault": {
+          "cumulative": 568846193.0,
+          "inflation": 142235580.0
         }
       }
     },
     {
       "date": "2026-08-05",
-      "cumulative": 0.0,
-      "inflation": 0.0,
+      "cumulative": 33486047954.0,
+      "inflation": 6275686934.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 19452833372.0,
+          "inflation": 3468106418.0
+        },
+        "solstice": {
+          "cumulative": 13322686178.0,
+          "inflation": 2665898305.0
+        },
         "strcusx": {
           "cumulative": 0.0,
           "inflation": 0.0
+        },
+        "yield_vault": {
+          "cumulative": 710528403.0,
+          "inflation": 141682210.0
         }
       }
     },
     {
       "date": "2026-08-06",
-      "cumulative": 1126.0,
-      "inflation": 1126.0,
+      "cumulative": 39711278476.0,
+      "inflation": 6225230522.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 22870535008.0,
+          "inflation": 3417701635.0
+        },
+        "solstice": {
+          "cumulative": 15988980480.0,
+          "inflation": 2666294302.0
+        },
         "strcusx": {
-          "cumulative": 1126.0,
-          "inflation": 1126.0
+          "cumulative": 1102.0,
+          "inflation": 1102.0
+        },
+        "yield_vault": {
+          "cumulative": 851761887.0,
+          "inflation": 141233483.0
         }
       }
     },
     {
       "date": "2026-08-07",
-      "cumulative": 207997.0,
-      "inflation": 206871.0,
+      "cumulative": 45935293651.0,
+      "inflation": 6224015174.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 26285513084.0,
+          "inflation": 3414978077.0
+        },
+        "solstice": {
+          "cumulative": 18656668836.0,
+          "inflation": 2667688356.0
+        },
         "strcusx": {
-          "cumulative": 207997.0,
-          "inflation": 206871.0
+          "cumulative": 203141.0,
+          "inflation": 202039.0
+        },
+        "yield_vault": {
+          "cumulative": 992908589.0,
+          "inflation": 141146703.0
         }
       }
     },
     {
       "date": "2026-08-08",
-      "cumulative": 637447.0,
-      "inflation": 429450.0,
+      "cumulative": 52292053886.0,
+      "inflation": 6356760235.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 29833390416.0,
+          "inflation": 3547877332.0
+        },
+        "solstice": {
+          "cumulative": 21324036570.0,
+          "inflation": 2667367734.0
+        },
         "strcusx": {
-          "cumulative": 637447.0,
-          "inflation": 429450.0
+          "cumulative": 622544.0,
+          "inflation": 419403.0
+        },
+        "yield_vault": {
+          "cumulative": 1134004356.0,
+          "inflation": 141095767.0
         }
       }
     },
     {
       "date": "2026-08-09",
-      "cumulative": 1066896.0,
-      "inflation": 429450.0,
+      "cumulative": 58443734469.0,
+      "inflation": 6151680583.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 33176205752.0,
+          "inflation": 3342815336.0
+        },
+        "solstice": {
+          "cumulative": 23991453460.0,
+          "inflation": 2667416889.0
+        },
         "strcusx": {
-          "cumulative": 1066896.0,
-          "inflation": 429450.0
+          "cumulative": 1041947.0,
+          "inflation": 419403.0
+        },
+        "yield_vault": {
+          "cumulative": 1275033310.0,
+          "inflation": 141028954.0
         }
       }
     },
     {
       "date": "2026-08-10",
-      "cumulative": 1987103.0,
-      "inflation": 920207.0,
+      "cumulative": 69840997902.0,
+      "inflation": 11397263433.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 41764385935.0,
+          "inflation": 8588180183.0
+        },
+        "solstice": {
+          "cumulative": 26658497035.0,
+          "inflation": 2667043575.0
+        },
         "strcusx": {
-          "cumulative": 1987103.0,
-          "inflation": 920207.0
+          "cumulative": 1953897.0,
+          "inflation": 911950.0
+        },
+        "yield_vault": {
+          "cumulative": 1416161035.0,
+          "inflation": 141127725.0
         }
       }
     },
     {
       "date": "2026-08-11",
-      "cumulative": 4141546.0,
-      "inflation": 2154443.0,
+      "cumulative": 75983369632.0,
+      "inflation": 6142371730.0,
       "by_partner": {
+        "exponent": {
+          "cumulative": 45096310050.0,
+          "inflation": 3331924114.0
+        },
+        "solstice": {
+          "cumulative": 29325682656.0,
+          "inflation": 2667185621.0
+        },
         "strcusx": {
-          "cumulative": 4141546.0,
-          "inflation": 2154443.0
+          "cumulative": 4133064.0,
+          "inflation": 2179167.0
+        },
+        "yield_vault": {
+          "cumulative": 1557243864.0,
+          "inflation": 141082828.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-12",
+      "cumulative": 82158434184.0,
+      "inflation": 6175064552.0,
+      "by_partner": {
+        "exponent": {
+          "cumulative": 48461413453.0,
+          "inflation": 3365103404.0
+        },
+        "solstice": {
+          "cumulative": 31991999090.0,
+          "inflation": 2666316435.0
+        },
+        "strcusx": {
+          "cumulative": 6688884.0,
+          "inflation": 2555820.0
+        },
+        "yield_vault": {
+          "cumulative": 1698332756.0,
+          "inflation": 141088892.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-13",
+      "cumulative": 88341872225.0,
+      "inflation": 6183438041.0,
+      "by_partner": {
+        "exponent": {
+          "cumulative": 51834890947.0,
+          "inflation": 3373477493.0
+        },
+        "solstice": {
+          "cumulative": 34658314926.0,
+          "inflation": 2666315835.0
+        },
+        "strcusx": {
+          "cumulative": 9244705.0,
+          "inflation": 2555820.0
+        },
+        "yield_vault": {
+          "cumulative": 1839421648.0,
+          "inflation": 141088892.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-14",
+      "cumulative": 94525295033.0,
+      "inflation": 6183422807.0,
+      "by_partner": {
+        "exponent": {
+          "cumulative": 55208359620.0,
+          "inflation": 3373468673.0
+        },
+        "solstice": {
+          "cumulative": 37324624347.0,
+          "inflation": 2666309421.0
+        },
+        "strcusx": {
+          "cumulative": 11800525.0,
+          "inflation": 2555820.0
+        },
+        "yield_vault": {
+          "cumulative": 1980510541.0,
+          "inflation": 141088892.0
         }
       }
     }
@@ -160,11 +367,11 @@
     }
   ],
   "sources": {
-    "reconstructed_through_last_midnight": 4141546.0,
-    "wallet_quests_grand_total_now": 4436642.0,
-    "wallet_quests_grand_total_non_pda": 4436642.0,
+    "reconstructed_through_last_midnight": 94525295033.0,
+    "wallet_quests_grand_total_now": 72588089536.0,
+    "wallet_quests_grand_total_non_pda": 42601670643.0,
     "pda_excluded_count": 1944,
-    "pda_excluded_flares": 0,
+    "pda_excluded_flares": 29986418892.0,
     "note": "Bars represent flares as of each day's 00:00 UTC. Today is in-progress and is omitted until tomorrow's 00:00 UTC. Protocol-PDA wallets are excluded to match Solstice's leaderboard."
   }
 }

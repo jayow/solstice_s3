@@ -352,6 +352,7 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
           <option value="solstice">Has Hold USX</option>
           <option value="yield_vault">Has Hold eUSX</option>
           <option value="strcusx">Has strcUSX</option>
+          <option value="exponent">Has Exponent</option>
         </select>
         <button id="toggle-pdas" onclick="togglePDAs()" title="Show or hide protocol-internal PDA addresses (vault contracts, strategy aggregators, etc.). Totals and ranks update accordingly.">Hide PDAs</button>
         <button id="toggle-view" onclick="toggleView()" title="Switch the headline stat, table column, and per-wallet drawer between cumulative S2 Flares and current-snapshot TVL (USD).">Show TVL</button>
@@ -371,6 +372,7 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
             <th data-key="solstice">Hold USX</th>
             <th data-key="yield_vault">Hold eUSX</th>
             <th data-key="strcusx">strcUSX</th>
+            <th data-key="exponent" title="Exponent YT + LP. YT is credited only for days observed on-chain — see the coverage note below the table.">Exponent</th>
           </tr>
         </thead>
         <tbody id="tb"></tbody>
@@ -384,6 +386,8 @@ footer { text-align: center; color: var(--ink-500); font-size: 11px; margin-top:
       </div>
     </div>
   </section>
+
+  <section id="coverage-note" style="margin:-24px 0 40px; font-size:12px; color:var(--ink-400); line-height:1.6;"></section>
 
   <footer>
     Estimated S3 Flares per wallet · TWAB-based per-protocol calculations · Updated <span id="footer-time"></span>
@@ -790,6 +794,10 @@ const QUEST_META = {
   S3_HOLD_EUSX_1MO:  { mult: 4,  label: 'Hold eUSX for 1 month',  partner: 'Yield Vault' },
   S3_HOLD_EUSX_3MO:  { mult: 10, label: 'Hold eUSX for 3 months', partner: 'Yield Vault' },
   S3_HOLD_JR_STRCUSX_DAILY: { mult: 20, label: 'Hold JR-strcUSX (junior tranche)', partner: 'strcUSX' },
+  S3_EXPONENT_YIELD_USX_SEP26:  { mult: 30, label: 'Farm Variable USX Yield (Exponent 16Sep26)',  partner: 'Exponent' },
+  S3_EXPONENT_YIELD_EUSX_SEP26: { mult: 15, label: 'Farm Variable eUSX Yield (Exponent 16Sep26)', partner: 'Exponent' },
+  S3_EXPONENT_LP_USX_SEP26:     { mult: 20, label: 'Supply USX Liquidity (Exponent 16Sep26)',     partner: 'Exponent' },
+  S3_EXPONENT_LP_EUSX_SEP26:    { mult: 10, label: 'Supply eUSX Liquidity (Exponent 16Sep26)',    partner: 'Exponent' },
   S3_HOLD_SR_STRCUSX_DAILY: { mult: 15, label: 'Hold SR-strcUSX (senior tranche)', partner: 'strcUSX' },
 };
 const QUEST_EV_KEY = {
@@ -913,7 +921,7 @@ async function openDrawer(addr) {
 
 // Partner ordering matches Solstice's flares dashboard: Solstice → Exponent →
 // Kamino → Orca → Raydium → Yield Vault (eUSX HOLD) → Loopscale.
-const PARTNER_ORDER = ['Solstice', 'Yield Vault', 'strcUSX'];
+const PARTNER_ORDER = ['Solstice', 'Yield Vault', 'strcUSX', 'Exponent'];
 
 // Partner is declared per-quest in QUEST_META (sourced from Solstice's
 // protocolCode). Falls back to 'Other' if a new quest is missing it.
@@ -1142,6 +1150,26 @@ async function load() {
   if (th) th.textContent = VIEW_MODE === 'tvl' ? 'TVL' : 'Total';
   renderStats();
   applyFilters();
+  renderCoverageNote();
+}
+
+// Exponent YT is credited ONLY for days observed on-chain. No event stream
+// (wrapper market, orderbook, or core market) reconstructs YT positions
+// reliably — all three were built and all three failed. Saying so on the page
+// is the difference between an honest partial number and a silent wrong one.
+function renderCoverageNote() {
+  const el = document.getElementById('coverage-note');
+  if (!el) return;
+  const cov = RAW.yt_snapshot_coverage;
+  if (!cov || !Object.keys(cov).length) { el.innerHTML = ''; return; }
+  const vals = Object.values(cov);
+  const obs = Math.min(...vals.map(v => v.days_observed));
+  const tot = Math.max(...vals.map(v => v.season_days));
+  el.innerHTML = `<strong style="color:var(--accent-2);">Exponent YT coverage: ${obs} of ${tot} season days observed.</strong>
+    YT balances are read straight from Exponent's on-chain yield positions, once a day. Days before daily
+    snapshots began are <em>not</em> back-filled — position history cannot be reconstructed from event
+    streams, so those days earn nothing rather than a guessed amount. The Exponent YT figures are therefore
+    a floor, and converge on the true total as coverage grows.`;
 }
 
 function onChartModeChange(v) {
@@ -1416,6 +1444,7 @@ const PARTNER_LABELS = {
   solstice: 'USX Hold',
   yield_vault: 'eUSX Hold',
   strcusx: 'strcUSX Tranches',
+  exponent: 'Exponent',
 };
 
 // One color per family — kept consistent between the donut and stacked chart.
@@ -1423,10 +1452,11 @@ const PARTNER_COLORS = {
   solstice:    '#fb7185',  // pink/coral (matches S2)
   yield_vault: '#fbbf24',  // yellow (matches S2)
   strcusx:     '#7c5cff',  // purple
+  exponent:    '#22d3ee',  // cyan
 };
 
 function _partnerRows(allRecords) {
-  const partners = RAW.partners || ['solstice','yield_vault','strcusx'];
+  const partners = RAW.partners || ['solstice','yield_vault','strcusx','exponent'];
   const totals = Object.fromEntries(partners.map(p => [p, 0]));
   let grand = 0;
   for (const r of allRecords) for (const p of partners) { const v = r[p] || 0; totals[p] += v; grand += v; }
@@ -1586,6 +1616,7 @@ function render() {
       <td>${fmt(r.solstice)}</td>
       <td>${fmt(r.yield_vault)}</td>
       <td>${fmt(r.strcusx)}</td>
+      <td>${fmt(r.exponent)}</td>
     </tr>`;
   }).join("");
   document.getElementById("pageinfo").textContent =
