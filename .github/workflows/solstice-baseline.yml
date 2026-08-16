@@ -35,7 +35,7 @@ concurrency:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15   # holder-set scan is the long pole (~4 getProgramAccounts)
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,18 +56,31 @@ jobs:
         # being awake. dataSlice keeps it to 80 bytes/position, ~2s, no secrets.
         run: python3 tools/capture_yt_positions.py data/yt_positions.jsonl
 
+      - name: Capture USX/eUSX/strcUSX holder set
+        id: holders
+        # Balances are reconstructible from signature history; MEMBERSHIP is not.
+        # The walkers discover who to walk with getProgramAccounts — a current-
+        # state read — so a wallet that drains and closes its ATA disappears from
+        # every future scan and is silently dropped from the season. Recording
+        # the owner set daily means a wallet seen once stays walkable forever.
+        # Delta-encoded with a weekly full row: ~18 MB per season.
+        run: python3 tools/capture_holder_set.py data/holder_sets.jsonl
+
       - name: Commit + push
-        if: steps.capture.outputs.appended == 'true' || steps.yt.outputs.appended == 'true'
+        if: steps.capture.outputs.appended == 'true' || steps.yt.outputs.appended == 'true' || steps.holders.outputs.appended == 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/solstice_totals.jsonl data/yt_positions.jsonl
+          git add data/solstice_totals.jsonl data/yt_positions.jsonl data/holder_sets.jsonl
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
             MSG="baseline: ${{ steps.capture.outputs.date_utc }} = ${{ steps.capture.outputs.total_flares }} flares"
             if [ "${{ steps.yt.outputs.appended }}" = "true" ]; then
               MSG="$MSG + YT positions"
+            fi
+            if [ "${{ steps.holders.outputs.appended }}" = "true" ]; then
+              MSG="$MSG + holder sets"
             fi
             # Surface a catalog change in the subject line — a new S3 partner
             # quest is the trigger to wire up a walker for it in the main repo.
@@ -88,3 +101,4 @@ jobs:
           echo "- total_flares: \`${{ steps.capture.outputs.total_flares }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- quests: \`${{ steps.capture.outputs.n_quests }}\` (changed: \`${{ steps.capture.outputs.quests_changed }}\`)" >> $GITHUB_STEP_SUMMARY
           echo "- lines in log: \`$(wc -l < data/solstice_totals.jsonl)\`" >> $GITHUB_STEP_SUMMARY
+          echo "- holder sets: \`${{ steps.holders.outputs.assets }}\` asset(s) captured" >> $GITHUB_STEP_SUMMARY
